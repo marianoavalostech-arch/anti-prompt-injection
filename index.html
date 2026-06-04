@@ -314,6 +314,8 @@
     .transform-tag.original    { background: rgba(139,144,184,0.18); color: var(--text2); }
     .transform-tag.normalizado { background: rgba(0,212,170,0.18);   color: var(--accent2); }
     .transform-tag.base64      { background: rgba(255,179,71,0.2);   color: var(--warning); }
+    .transform-tag.url-enc     { background: rgba(108,99,255,0.22);  color: #a09aff; }
+    .transform-tag.html-ent    { background: rgba(255,77,109,0.18);  color: #ff8fa3; }
 
     /* Badges de confianza */
     .confidence-tag {
@@ -407,7 +409,7 @@
     <p>Analiza documentos PDF, Word, texto, HTML o URLs en busca de instrucciones maliciosas</p>
   </div>
   <div class="header-right">
-    <span class="v-badge">v2.0</span>
+    <span class="v-badge">v2.1</span>
     <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema">🌙</button>
   </div>
 </header>
@@ -537,7 +539,7 @@
 </main>
 
 <footer>
-  Análisis local · Sin envío de datos (excepto proxy URL) · 15 categorías · v2.0
+  Análisis local · Sin envío de datos (excepto proxy URL) · <span id="catCount"></span> categorías · v2.1
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -572,6 +574,26 @@ const MAX_MATCHES_RENDER = 20;
 const MAX_BASE64_BLOBS   = 60;
 const ZERO_WIDTH_RE      = /[​‌‍‎‏﻿⁠⁢⁣⁤­]/;
 const TAG_CHAR_RANGE     = { min: 0xE0000, max: 0xE007F };
+
+const RISK_TYPE_MAP = {
+  'Override de instrucciones':              'Instruction Override',
+  'Manipulación de rol':                    'Role Manipulation',
+  'Extracción de system prompt':            'Prompt Extraction',
+  'Suplantación de autoridad':              'Instruction Override',
+  'Inyección indirecta u oculta':           'Hidden Content',
+  'Contenido codificado sospechoso':        'Hidden Content',
+  'Exfiltración de datos':                  'Data Exfiltration',
+  'Desbloqueo de contenido dañino':         'Tool Abuse',
+  'Inyección de código / plantilla':        'Tool Abuse',
+  'Escape de contexto':                     'Instruction Override',
+  'Ingeniería social':                      'Role Manipulation',
+  'Jailbreaks conocidos':                   'Role Manipulation',
+  'Manipulación de conversación':           'Instruction Override',
+  'Inyección estructurada (JSON/YAML/XML)': 'Instruction Override',
+  'Ofuscación avanzada':                    'Hidden Content',
+  'Inyección en otros idiomas':             'Instruction Override',
+  'Indicadores semánticos de control':      'Instruction Override',
+};
 
 /**
  * Homóglifos: carácter de otro alfabeto → equivalente latino.
@@ -695,6 +717,8 @@ const PATTERNS = [
         regex: /[\u{E0000}-\u{E007F}]/gu },
       { name: 'Texto oculto por CSS', fpRisk: 'low',
         regex: /(?:color\s*:\s*(?:#(?:fff{1,3}|ffffff)|white)|color\s*:\s*rgba?\([^)]*,\s*0\s*\)|opacity\s*:\s*0(?:\.0+)?|font-size\s*:\s*0|display\s*:\s*none|visibility\s*:\s*hidden)/gi },
+      { name: 'Elemento fuera de pantalla (CSS)', fpRisk: 'low',
+        regex: /(?:position\s*:\s*(?:absolute|fixed)[^;}"'<]{0,80}(?:left|top)\s*:\s*-\d{3,}px|transform\s*:\s*scale\s*\(\s*0(?:\.0+)?\s*\))/gi },
       { name: 'Instrucción en comentario HTML', fpRisk: 'low',
         regex: /<!--[\s\S]*?(?:ignore|forget|act\s+as|you\s+are|system|instruction|prompt|disregard|reveal)[\s\S]*?-->/gi },
       { name: 'Atributo HTML con instrucción', fpRisk: 'low',
@@ -905,6 +929,23 @@ const PATTERNS = [
     ],
   },
 
+  /* ── 17. Indicadores semánticos de control ───────────────────────────── */
+  {
+    category: 'Indicadores semánticos de control',
+    severity: 'high',
+    icon: '🧠',
+    rules: [
+      { name: 'Precedencia / autoridad de instrucciones (EN)', fpRisk: 'low',
+        regex: /(?:(?:these?|the\s+following|new)\s+(?:instructions?|directives?|guidance|rules?)\s+(?:take\s+|shall\s+)?(?:precedence|priority)\b|(?:governing|authoritative|controlling|superseding|operational)\s+(?:instructions?|directives?|guidance|rules?|order)|(?:instructions?|directives?)\s+(?:supersede|override|replace|govern)\s+(?:all\s+)?(?:previous|prior|above|earlier))/gi },
+      { name: 'Precedencia / autoridad de instrucciones (ES)', fpRisk: 'low',
+        regex: /(?:(?:estas?|las?\s+siguientes?)\s+(?:instrucciones?|directivas?|reglas?)\s+(?:tienen?\s+)?(?:prioridad|precedencia)\b|(?:instrucciones?|directivas?)\s+(?:vigentes?|operativas?|prioritarias?|de\s+control|que\s+rigen?\s+sobre)|(?:instrucciones?|reglas?)\s+(?:reemplaz[ao]n?|anulan?|prevalecen?)\s+(?:a\s+(?:todas?\s+)?)?(?:las?\s+)?(?:anteriores?|previas?))/gi },
+      { name: 'Desestimar contexto previo (semántico)', fpRisk: 'low',
+        regex: /(?:(?:the\s+)?(?:previous|prior|above|earlier|foregoing)\s+(?:context|content|text|information)\s+(?:is|are|should\s+be)\s+(?:informational\s+only|for\s+context\s+only|not\s+binding|not\s+operative|superseded)|treat\s+(?:the\s+)?(?:above|previous)\s+(?:as\s+)?(?:background\s+only|context\s+only|non-operative))/gi },
+      { name: 'Orden de prioridad operativo', fpRisk: 'low',
+        regex: /(?:follow\s+(?:only|just|exclusively|strictly)\s+(?:the\s+)?(?:instructions?|directives?|rules?|guidance)\s+(?:below|that\s+follow|in\s+this\s+(?:section|message|block))|only\s+(?:the\s+)?(?:instructions?|directives?|rules?)\s+(?:below|following)\s+(?:are|shall\s+be)\s+(?:valid|applicable|authoritative|binding|operative))/gi },
+    ],
+  },
+
 ];
 
 
@@ -931,6 +972,8 @@ function getRiskLevel(score) {
  * - Elimina espacios de ofuscación entre letras aisladas (i g n o r e → ignore)
  */
 function buildNormalizedView(raw) {
+  // NFKC: resuelve fullwidth, caracteres de compatibilidad y formas equivalentes Unicode
+  try { raw = raw.normalize('NFKC'); } catch (_) {}
   const isTagChar  = cp => cp >= TAG_CHAR_RANGE.min && cp <= TAG_CHAR_RANGE.max;
   const isAlphaNum = ch => ch !== undefined && /[A-Za-z0-9]/.test(ch);
   const isSpace    = ch => ch === undefined || /\s/.test(ch);
@@ -1004,6 +1047,47 @@ function decodeBase64Blobs(raw) {
   return results;
 }
 
+/**
+ * Detecta y decodifica secuencias URL-encoded (%xx) dentro del texto.
+ * Solo incluye las que producen texto mayormente imprimible.
+ */
+function decodeURLEncoded(raw) {
+  const results = [];
+  const pattern = /(?:%[0-9a-fA-F]{2}){4,}/g;
+  let match;
+  while ((match = pattern.exec(raw)) !== null) {
+    try {
+      const decoded   = decodeURIComponent(match[0]);
+      const printable = decoded.replace(/[^\x20-\x7E]/g, '');
+      if (decoded.length >= 4 && printable.length / decoded.length > 0.65) {
+        results.push({ decoded, srcIndex: match.index, blob: match[0], encType: 'url-enc' });
+      }
+    } catch { /* secuencia inválida */ }
+  }
+  return results;
+}
+
+/**
+ * Detecta y decodifica secuencias de entidades HTML numéricas (&#xxx;).
+ * Solo incluye las que producen texto mayormente imprimible.
+ */
+function decodeHTMLEntities(raw) {
+  const results = [];
+  const pattern = /(?:&#(?:\d{2,5}|x[0-9a-fA-F]{2,4});){3,}/gi;
+  let match;
+  while ((match = pattern.exec(raw)) !== null && results.length < 30) {
+    try {
+      const tmp     = document.createElement('textarea');
+      tmp.innerHTML = match[0];
+      const decoded = tmp.value;
+      if (decoded.length >= 3) {
+        results.push({ decoded, srcIndex: match.index, blob: match[0], encType: 'html-ent' });
+      }
+    } catch { /* inválido */ }
+  }
+  return results;
+}
+
 
 /* ─── 4. DETECCIÓN DE CONTEXTO DE CÓDIGO ───────────────────────────────── */
 
@@ -1047,19 +1131,33 @@ function isInCodeBlock(index, codeRanges) {
  *
  * Lógica:
  *   fpRisk 'none'   → siempre 'confirmed'
- *   fpRisk 'low'    → 'confirmed' (o 'likely' si en bloque de código)
+ *   fpRisk 'low'    → 'confirmed' (o 'likely' si en código o contexto educativo)
  *   fpRisk 'medium' → 'likely'    (o 'possible' si en bloque de código)
  *   fpRisk 'high'   → 'possible' siempre
  *
  * @returns {'confirmed'|'likely'|'possible'}
  */
-function computeConfidence(matchIndex, rule, codeRanges) {
+
+/**
+ * Verifica si existe contexto educativo/documental cerca de la coincidencia.
+ * Se usa para reducir FP en tutoriales, artículos y documentación técnica.
+ */
+const EDUCATIONAL_RE = /\b(?:tutorial|example?|ejempl[oa]|demonstrat|research|documentati|documentaci[oó]n|for\s+instance|e\.g\.|describes?|explica|shows?\s+how|academic|lecture|course|snippet|artículo|investigaci[oó]n|paper|guide|gu[ií]a)\b/i;
+
+function hasEducationalContext(text, matchIndex, windowSize = 250) {
+  const start = Math.max(0, matchIndex - windowSize);
+  const end   = Math.min(text.length, matchIndex + windowSize);
+  return EDUCATIONAL_RE.test(text.slice(start, end));
+}
+
+function computeConfidence(matchIndex, rule, codeRanges, text) {
   const inCode = isInCodeBlock(matchIndex, codeRanges);
+  const inEdu  = (text && rule.fpRisk === 'low') ? hasEducationalContext(text, matchIndex) : false;
   const risk   = rule.fpRisk ?? 'low';
 
   if (risk === 'none')   return 'confirmed';
-  if (risk === 'low')    return inCode ? 'likely'   : 'confirmed';
-  if (risk === 'medium') return inCode ? 'possible' : 'likely';
+  if (risk === 'low')    return (inCode || inEdu) ? 'likely'   : 'confirmed';
+  if (risk === 'medium') return inCode            ? 'possible' : 'likely';
   /* 'high' */           return 'possible';
 }
 
@@ -1067,13 +1165,14 @@ function computeConfidence(matchIndex, rule, codeRanges) {
 /* ─── 5. MOTOR DE ANÁLISIS ──────────────────────────────────────────────── */
 
 /**
- * Ejecuta todos los patrones sobre el texto en tres variantes:
- * original, normalizado y decodificado desde Base64.
+ * Ejecuta todos los patrones sobre el texto en cuatro variantes:
+ * original, normalizado, decodificado desde Base64, URL-encoded y HTML-entities.
  * Cada coincidencia lleva un campo `confidence`.
  */
 function runPatterns(text) {
   const { text: normalizedText } = buildNormalizedView(text);
   const base64Blobs              = decodeBase64Blobs(text);
+  const encodedBlobs             = [...decodeURLEncoded(text), ...decodeHTMLEntities(text)];
   const codeRanges               = buildCodeRanges(text);
   const findings                 = [];
 
@@ -1095,7 +1194,7 @@ function runPatterns(text) {
           transform:  'original',
           text:       m[0],
           index:      m.index,
-          confidence: computeConfidence(m.index, rule, codeRanges),
+          confidence: computeConfidence(m.index, rule, codeRanges, text),
         });
       }
 
@@ -1139,6 +1238,22 @@ function runPatterns(text) {
             index:      blob.srcIndex,
             decoded:    blob.decoded.slice(0, 200),
             confidence: 'confirmed', // Base64 con inyección es casi siempre real
+          });
+        }
+      }
+
+      // 4. Contenido URL-encoded y HTML-entity encoded
+      for (const blob of encodedBlobs) {
+        const reEnc = makeRegex('g');
+        while ((m = reEnc.exec(blob.decoded)) !== null) {
+          matches.push({
+            rule:       rule.name,
+            severity:   pattern.severity,
+            transform:  blob.encType,
+            text:       m[0],
+            index:      blob.srcIndex,
+            decoded:    blob.decoded.slice(0, 200),
+            confidence: 'confirmed',
           });
         }
       }
@@ -1406,12 +1521,22 @@ function copyReport(event) {
 function exportJSON() {
   if (!lastReport) return;
 
+  // Desglose por tipo de riesgo
+  const riskTypes = {};
+  for (const f of lastReport.findings) {
+    const type = RISK_TYPE_MAP[f.category] || 'Other';
+    if (!riskTypes[type]) riskTypes[type] = { categories: [], matches: 0 };
+    riskTypes[type].categories.push(f.category);
+    riskTypes[type].matches += f.matches.length;
+  }
+
   const payload = {
-    version:  '2.0',
-    date:     new Date().toISOString(),
-    source:   lastReport.title,
-    score:    lastReport.score,
-    findings: lastReport.findings,
+    version:    '2.1',
+    date:       new Date().toISOString(),
+    source:     lastReport.title,
+    score:      lastReport.score,
+    risk_types: riskTypes,
+    findings:   lastReport.findings,
   };
 
   const blob   = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -1531,6 +1656,10 @@ if (typeof pdfjsLib !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
+
+// Número de categorías dinámico en el footer
+const catCountEl = document.getElementById('catCount');
+if (catCountEl) catCountEl.textContent = PATTERNS.length;
 
 </script>
 </body>
