@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Detector de Prompt Injection</title>
+  <title>Detector de Prompt Injection v2</title>
   <style>
 
     /* ─── VARIABLES DE TEMA ─────────────────────────────────────────────── */
@@ -45,11 +45,7 @@
 
     /* ─── RESET Y BASE ──────────────────────────────────────────────────── */
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
@@ -72,64 +68,49 @@
     }
 
     .logo {
-      width: 40px;
-      height: 40px;
+      width: 40px; height: 40px;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
     }
 
     .titles     { flex: 1; }
     .titles h1  { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.3px; }
     .titles p   { font-size: 0.82rem; color: var(--text2); margin-top: 2px; }
 
+    .header-right { display: flex; gap: 8px; align-items: center; }
+
+    .v-badge {
+      font-size: 0.7rem; font-weight: 700; padding: 3px 8px;
+      border-radius: 20px;
+      background: rgba(108,99,255,0.18); color: var(--accent);
+      border: 1px solid rgba(108,99,255,0.3);
+    }
+
     .theme-toggle {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text2);
-      border-radius: 10px;
-      width: 40px;
-      height: 40px;
-      cursor: pointer;
-      font-size: 1.1rem;
-      transition: all 0.2s;
-      flex-shrink: 0;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text2); border-radius: 10px;
+      width: 40px; height: 40px;
+      cursor: pointer; font-size: 1.1rem; transition: all 0.2s; flex-shrink: 0;
     }
     .theme-toggle:hover { color: var(--text); border-color: var(--accent); }
 
     /* ─── LAYOUT PRINCIPAL ──────────────────────────────────────────────── */
 
     main {
-      flex: 1;
-      padding: 28px 40px;
-      max-width: 1100px;
-      margin: 0 auto;
-      width: 100%;
+      flex: 1; padding: 28px 40px;
+      max-width: 1100px; margin: 0 auto; width: 100%;
     }
 
     /* ─── TABS ──────────────────────────────────────────────────────────── */
 
-    .tabs {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 18px;
-      flex-wrap: wrap;
-    }
+    .tabs { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
 
     .tab {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text2);
-      border-radius: 10px;
-      padding: 9px 16px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text2); border-radius: 10px; padding: 9px 16px;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
     }
     .tab:hover  { color: var(--text); }
     .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -137,48 +118,30 @@
     .tab-panel        { display: none; }
     .tab-panel.active { display: block; }
 
-    /* ─── ZONA DE CARGA (DROPZONE) ──────────────────────────────────────── */
+    /* ─── DROPZONE ──────────────────────────────────────────────────────── */
 
     #dropzone {
-      border: 2px dashed var(--border);
-      border-radius: 16px;
-      padding: 48px 40px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      background: var(--surface);
-      position: relative;
-      outline: none;
+      border: 2px dashed var(--border); border-radius: 16px;
+      padding: 48px 40px; text-align: center; cursor: pointer;
+      transition: all 0.2s; background: var(--surface);
+      position: relative; outline: none;
     }
-    #dropzone:focus-visible {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.25);
-    }
-    #dropzone.drag-over {
-      border-color: var(--accent);
-      background: rgba(108, 99, 255, 0.08);
-    }
+    #dropzone:focus-visible { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(108,99,255,0.25); }
+    #dropzone.drag-over     { border-color: var(--accent); background: rgba(108,99,255,0.08); }
 
     .drop-icon    { font-size: 2.6rem; margin-bottom: 12px; }
     #dropzone h2  { font-size: 1.05rem; font-weight: 600; margin-bottom: 8px; }
     #dropzone p   { color: var(--text2); font-size: 0.86rem; }
 
     .formats {
-      margin-top: 16px;
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      flex-wrap: wrap;
+      margin-top: 16px; display: flex; gap: 8px;
+      justify-content: center; flex-wrap: wrap;
     }
 
     .badge {
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text2);
+      padding: 4px 10px; border-radius: 20px; font-size: 0.75rem;
+      font-weight: 600; background: var(--surface2);
+      border: 1px solid var(--border); color: var(--text2);
     }
 
     #fileInput { display: none; }
@@ -188,81 +151,47 @@
     .row { display: flex; gap: 10px; }
 
     .row input[type="text"] {
-      flex: 1;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 12px 16px;
-      color: var(--text);
-      font-size: 0.88rem;
-      outline: none;
-      transition: border-color 0.2s;
+      flex: 1; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 16px; color: var(--text);
+      font-size: 0.88rem; outline: none; transition: border-color 0.2s;
     }
     .row input[type="text"]:focus { border-color: var(--accent); }
-
-    .row input::placeholder,
-    textarea::placeholder { color: var(--text3); }
+    .row input::placeholder, textarea::placeholder { color: var(--text3); }
 
     textarea {
-      width: 100%;
-      min-height: 180px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 16px;
-      color: var(--text);
-      font-size: 0.86rem;
-      font-family: 'Cascadia Code', Consolas, monospace;
-      outline: none;
-      resize: vertical;
-      line-height: 1.55;
+      width: 100%; min-height: 180px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 16px; color: var(--text);
+      font-size: 0.86rem; font-family: 'Cascadia Code', Consolas, monospace;
+      outline: none; resize: vertical; line-height: 1.55;
       transition: border-color 0.2s;
     }
     textarea:focus { border-color: var(--accent); }
 
-    button,
-    .btn {
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      padding: 12px 20px;
-      font-size: 0.88rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      white-space: nowrap;
+    button, .btn {
+      background: var(--accent); color: #fff; border: none;
+      border-radius: 10px; padding: 12px 20px;
+      font-size: 0.88rem; font-weight: 600; cursor: pointer;
+      transition: opacity 0.2s; white-space: nowrap;
     }
-    button:hover,
-    .btn:hover { opacity: 0.85; }
+    button:hover, .btn:hover { opacity: 0.85; }
 
     .btn-secondary {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      color: var(--text2);
+      background: var(--surface2); border: 1px solid var(--border); color: var(--text2);
     }
     .btn-secondary:hover { color: var(--text); border-color: var(--accent); opacity: 1; }
 
     .hint { font-size: 0.78rem; color: var(--text3); margin-top: 8px; }
 
-    /* ─── ESTADO DE CARGA ───────────────────────────────────────────────── */
+    /* ─── CARGA ─────────────────────────────────────────────────────────── */
 
-    #loading {
-      display: none;
-      text-align: center;
-      padding: 40px;
-    }
+    #loading { display: none; text-align: center; padding: 40px; }
 
     .spinner {
-      width: 44px;
-      height: 44px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      margin: 0 auto 16px;
+      width: 44px; height: 44px; border: 3px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.7s linear infinite; margin: 0 auto 16px;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ─── RESULTADOS ────────────────────────────────────────────────────── */
@@ -270,30 +199,20 @@
     #results { display: none; margin-top: 28px; }
 
     .result-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 20px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
+      display: flex; align-items: flex-start; gap: 20px;
+      margin-bottom: 20px; flex-wrap: wrap;
     }
 
     .risk-badge {
-      padding: 14px 22px;
-      border-radius: 14px;
-      font-weight: 700;
-      font-size: 0.95rem;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      flex-shrink: 0;
-      min-width: 120px;
+      padding: 14px 22px; border-radius: 14px; font-weight: 700;
+      font-size: 0.95rem; display: flex; flex-direction: column;
+      align-items: center; gap: 4px; flex-shrink: 0; min-width: 120px;
     }
     .risk-badge .risk-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.8px; opacity: 0.8; }
     .risk-badge .risk-score { font-size: 2rem; font-weight: 800; line-height: 1; }
-    .risk-badge.safe   { background: rgba(57, 217, 138, 0.15); color: var(--safe);    border: 1px solid rgba(57, 217, 138, 0.3); }
-    .risk-badge.medium { background: rgba(255, 179, 71, 0.15);  color: var(--warning); border: 1px solid rgba(255, 179, 71, 0.3); }
-    .risk-badge.high   { background: rgba(255, 77, 109, 0.15);  color: var(--danger);  border: 1px solid rgba(255, 77, 109, 0.3); }
+    .risk-badge.safe   { background: rgba(57,217,138,0.15); color: var(--safe);    border: 1px solid rgba(57,217,138,0.3); }
+    .risk-badge.medium { background: rgba(255,179,71,0.15);  color: var(--warning); border: 1px solid rgba(255,179,71,0.3); }
+    .risk-badge.high   { background: rgba(255,77,109,0.15);  color: var(--danger);  border: 1px solid rgba(255,77,109,0.3); }
 
     .result-summary            { flex: 1; min-width: 200px; }
     .result-summary h2         { font-size: 1.15rem; font-weight: 700; margin-bottom: 6px; }
@@ -311,42 +230,58 @@
     #findings { margin-bottom: 24px; }
 
     .section-title {
-      font-size: 0.78rem;
-      font-weight: 700;
-      margin-bottom: 14px;
-      color: var(--text2);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      font-size: 0.78rem; font-weight: 700; margin-bottom: 12px;
+      color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px;
     }
 
+    /* ─── FILTRO DE FALSOS POSITIVOS ────────────────────────────────────── */
+
+    .fp-filter {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 14px; padding: 10px 16px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; font-size: 0.83rem; color: var(--text2);
+    }
+    .fp-filter label { cursor: pointer; display: flex; align-items: center; gap: 7px; }
+    .fp-filter input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); }
+    .fp-count {
+      margin-left: auto; font-size: 0.74rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 20px;
+      background: rgba(139,144,184,0.15); color: var(--text3);
+    }
+
+    /* ─── TARJETAS DE CATEGORÍA ─────────────────────────────────────────── */
+
     .category-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 14px 18px;
-      margin-bottom: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 18px; margin-bottom: 10px;
     }
 
     .category-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-      user-select: none;
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer; user-select: none;
     }
 
     .category-icon { font-size: 1.1rem; }
     .category-name { font-weight: 600; font-size: 0.92rem; flex: 1; }
 
     .category-count {
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 20px;
+      font-size: 0.75rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 20px;
     }
-    .sev-high   .category-count { background: rgba(255, 77, 109, 0.2); color: var(--danger); }
-    .sev-medium .category-count { background: rgba(255, 179, 71, 0.2);  color: var(--warning); }
-    .sev-low    .category-count { background: rgba(108, 99, 255, 0.2);  color: var(--accent); }
+    .sev-high   .category-count { background: rgba(255,77,109,0.2);  color: var(--danger); }
+    .sev-medium .category-count { background: rgba(255,179,71,0.2);  color: var(--warning); }
+    .sev-low    .category-count { background: rgba(108,99,255,0.2);  color: var(--accent); }
+
+    /* Mini badges de confianza en la cabecera de categoría */
+    .mini-conf { display: flex; gap: 4px; align-items: center; }
+    .conf-dot {
+      font-size: 0.66rem; font-weight: 700;
+      padding: 1px 6px; border-radius: 20px;
+    }
+    .conf-dot.confirmed { background: rgba(57,217,138,0.15); color: var(--safe); }
+    .conf-dot.likely    { background: rgba(255,179,71,0.18); color: var(--warning); }
+    .conf-dot.possible  { background: rgba(139,144,184,0.15); color: var(--text3); }
 
     .chevron      { color: var(--text3); transition: transform 0.2s; font-size: 0.75rem; }
     .chevron.open { transform: rotate(180deg); }
@@ -354,46 +289,49 @@
     .match-list      { margin-top: 12px; display: none; }
     .match-list.open { display: block; }
 
+    /* ─── ITEMS DE COINCIDENCIA ─────────────────────────────────────────── */
+
     .match-item {
-      background: var(--surface2);
-      border-radius: 8px;
-      padding: 10px 14px;
-      margin-bottom: 6px;
-      font-size: 0.82rem;
+      background: var(--surface2); border-radius: 8px;
+      padding: 10px 14px; margin-bottom: 6px; font-size: 0.82rem;
+      transition: opacity 0.2s;
     }
+    .match-item.confidence-possible { opacity: 0.55; }
+    .match-item.fp-hidden           { display: none; }
 
     .match-meta {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-bottom: 5px;
+      display: flex; gap: 7px; align-items: center;
+      flex-wrap: wrap; margin-bottom: 5px;
     }
 
     .match-rule { color: var(--text2); font-size: 0.74rem; }
 
+    /* Etiquetas de transformación */
     .transform-tag {
-      font-size: 0.66rem;
-      font-weight: 700;
-      padding: 1px 7px;
-      border-radius: 20px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
+      font-size: 0.66rem; font-weight: 700; padding: 1px 7px;
+      border-radius: 20px; text-transform: uppercase; letter-spacing: 0.4px;
     }
-    .transform-tag.original    { background: rgba(139, 144, 184, 0.18); color: var(--text2); }
-    .transform-tag.normalizado { background: rgba(0, 212, 170, 0.18);   color: var(--accent2); }
-    .transform-tag.base64      { background: rgba(255, 179, 71, 0.2);   color: var(--warning); }
+    .transform-tag.original    { background: rgba(139,144,184,0.18); color: var(--text2); }
+    .transform-tag.normalizado { background: rgba(0,212,170,0.18);   color: var(--accent2); }
+    .transform-tag.base64      { background: rgba(255,179,71,0.2);   color: var(--warning); }
+
+    /* Badges de confianza */
+    .confidence-tag {
+      font-size: 0.65rem; font-weight: 700; padding: 1px 7px;
+      border-radius: 20px; letter-spacing: 0.3px;
+    }
+    .conf-confirmed { background: rgba(57,217,138,0.15); color: var(--safe); }
+    .conf-likely    { background: rgba(255,179,71,0.18); color: var(--warning); }
+    .conf-possible  { background: rgba(139,144,184,0.15); color: var(--text3); }
 
     .match-text {
-      color: var(--text);
-      font-family: monospace;
-      word-break: break-word;
-      line-height: 1.5;
+      color: var(--text); font-family: monospace;
+      word-break: break-word; line-height: 1.5;
     }
 
     .highlight        { background: var(--hi-bg); color: var(--hi-fg); border-radius: 3px; padding: 0 2px; }
-    .highlight.medium { background: rgba(255, 179, 71, 0.25); color: #ffc96b; }
-    .highlight.low    { background: rgba(108, 99, 255, 0.2);  color: #a09aff; }
+    .highlight.medium { background: rgba(255,179,71,0.25); color: #ffc96b; }
+    .highlight.low    { background: rgba(108,99,255,0.2);  color: #a09aff; }
 
     .match-location { color: var(--text3); font-size: 0.72rem; margin-top: 4px; }
     .decoded        { color: var(--accent2); font-size: 0.74rem; margin-top: 4px; word-break: break-all; }
@@ -401,60 +339,37 @@
     /* ─── SIN HALLAZGOS ─────────────────────────────────────────────────── */
 
     .no-findings {
-      text-align: center;
-      padding: 40px;
-      background: var(--surface);
-      border-radius: 14px;
-      border: 1px solid var(--border);
+      text-align: center; padding: 40px; background: var(--surface);
+      border-radius: 14px; border: 1px solid var(--border);
     }
     .no-findings .icon { font-size: 3rem; margin-bottom: 12px; }
     .no-findings h3    { font-size: 1rem; margin-bottom: 6px; color: var(--safe); }
     .no-findings p     { color: var(--text2); font-size: 0.85rem; }
 
-    /* ─── PREVISUALIZACIÓN DE TEXTO ─────────────────────────────────────── */
+    /* ─── PREVISUALIZACIÓN ──────────────────────────────────────────────── */
 
     #textPreview { margin-top: 20px; }
 
     .preview-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px 20px;
-      font-size: 0.82rem;
-      color: var(--text2);
-      max-height: 280px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      line-height: 1.7;
-      font-family: monospace;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 20px; font-size: 0.82rem;
+      color: var(--text2); max-height: 280px; overflow-y: auto;
+      white-space: pre-wrap; word-break: break-word;
+      line-height: 1.7; font-family: monospace;
     }
 
     /* ─── LEYENDA ────────────────────────────────────────────────────────── */
 
     details.legend {
-      margin-top: 22px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 4px 18px;
+      margin-top: 22px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 12px; padding: 4px 18px;
     }
-
     details.legend summary {
-      cursor: pointer;
-      padding: 12px 0;
-      font-size: 0.84rem;
-      font-weight: 600;
-      color: var(--text2);
+      cursor: pointer; padding: 12px 0; font-size: 0.84rem;
+      font-weight: 600; color: var(--text2);
     }
     details.legend[open] summary { color: var(--text); }
-
-    .legend-body {
-      padding: 0 0 16px;
-      font-size: 0.82rem;
-      color: var(--text2);
-      line-height: 1.7;
-    }
+    .legend-body { padding: 0 0 16px; font-size: 0.82rem; color: var(--text2); line-height: 1.7; }
     .legend-body strong  { color: var(--text); }
     .legend-body .lg-row { margin-bottom: 8px; }
 
@@ -467,11 +382,8 @@
     /* ─── PIE DE PÁGINA ──────────────────────────────────────────────────── */
 
     footer {
-      text-align: center;
-      padding: 16px;
-      color: var(--text3);
-      font-size: 0.78rem;
-      border-top: 1px solid var(--border);
+      text-align: center; padding: 16px; color: var(--text3);
+      font-size: 0.78rem; border-top: 1px solid var(--border);
     }
 
     /* ─── RESPONSIVE ─────────────────────────────────────────────────────── */
@@ -494,13 +406,15 @@
     <h1>Detector de Prompt Injection</h1>
     <p>Analiza documentos PDF, Word, texto, HTML o URLs en busca de instrucciones maliciosas</p>
   </div>
-  <button class="theme-toggle" id="themeToggle"
-          title="Cambiar tema" aria-label="Cambiar tema claro/oscuro">🌙</button>
+  <div class="header-right">
+    <span class="v-badge">v2.0</span>
+    <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema">🌙</button>
+  </div>
 </header>
 
 <main>
 
-  <!-- ── Área de entrada ──────────────────────────────────────────────── -->
+  <!-- ── Entrada ──────────────────────────────────────────────────────── -->
   <div id="inputArea">
 
     <div class="tabs" role="tablist">
@@ -509,10 +423,8 @@
       <button class="tab"        data-tab="paste" role="tab">📝 Pegar texto</button>
     </div>
 
-    <!-- Tab: Archivo -->
     <div class="tab-panel active" data-panel="file">
-      <div id="dropzone" tabindex="0" role="button"
-           aria-label="Subir archivo para analizar">
+      <div id="dropzone" tabindex="0" role="button" aria-label="Subir archivo para analizar">
         <div class="drop-icon">📁</div>
         <h2>Arrastra un archivo aquí o haz clic para seleccionar</h2>
         <p>El análisis es 100% local &mdash; ningún dato sale de tu dispositivo</p>
@@ -522,29 +434,23 @@
           <span class="badge">TXT</span>
           <span class="badge">MD</span>
           <span class="badge">HTML</span>
+          <span class="badge">JSON</span>
+          <span class="badge">XML</span>
         </div>
-        <input type="file" id="fileInput"
-               accept=".pdf,.docx,.txt,.md,.html,.htm,.json,.csv,.xml">
+        <input type="file" id="fileInput" accept=".pdf,.docx,.txt,.md,.html,.htm,.json,.csv,.xml,.yaml,.yml">
       </div>
     </div>
 
-    <!-- Tab: URL -->
     <div class="tab-panel" data-panel="url">
       <div class="row">
-        <input type="text" id="urlInput"
-               placeholder="https://ejemplo.com/documento.html">
+        <input type="text" id="urlInput" placeholder="https://ejemplo.com/documento.html">
         <button id="btnAnalyzeUrl">Analizar URL</button>
       </div>
-      <p class="hint">
-        Se descarga la página vía un proxy CORS público (con reintentos automáticos).
-        Si la URL no es accesible, prueba pegando el texto.
-      </p>
+      <p class="hint">Se descarga la página vía un proxy CORS público. Si no es accesible, pega el texto.</p>
     </div>
 
-    <!-- Tab: Pegar texto -->
     <div class="tab-panel" data-panel="paste">
-      <textarea id="pasteInput"
-                placeholder="Pega aquí el texto o HTML que quieras analizar..."></textarea>
+      <textarea id="pasteInput" placeholder="Pega aquí el texto o HTML que quieras analizar..."></textarea>
       <div class="row" style="margin-top: 10px;">
         <button id="btnAnalyzePaste">Analizar texto</button>
         <button class="btn-secondary" id="btnClearPaste">Limpiar</button>
@@ -553,15 +459,13 @@
 
   </div>
 
-  <!-- ── Indicador de carga ────────────────────────────────────────────── -->
+  <!-- ── Carga ─────────────────────────────────────────────────────────── -->
   <div id="loading">
     <div class="spinner"></div>
-    <p style="color: var(--text2); font-size: 0.88rem;">
-      Extrayendo y analizando texto...
-    </p>
+    <p style="color: var(--text2); font-size: 0.88rem;">Extrayendo y analizando texto...</p>
   </div>
 
-  <!-- ── Panel de resultados ──────────────────────────────────────────── -->
+  <!-- ── Resultados ───────────────────────────────────────────────────── -->
   <div id="results">
 
     <div class="result-header">
@@ -569,13 +473,11 @@
         <span class="risk-label">Riesgo</span>
         <span class="risk-score" id="riskScore">&ndash;</span>
       </div>
-
       <div class="result-summary">
         <h2 id="resultTitle">Análisis completado</h2>
         <div class="file-info" id="fileInfo"></div>
         <div class="stats"    id="statsRow"></div>
       </div>
-
       <div class="header-actions">
         <button class="btn-secondary" id="btnNewAnalysis">↩ Nuevo análisis</button>
         <button class="btn-secondary" id="btnCopyReport">📋 Copiar</button>
@@ -585,6 +487,14 @@
 
     <div id="findings">
       <h3 class="section-title">Detecciones por categoría</h3>
+      <!-- Filtro de falsos positivos (se muestra solo si hay posibles FP) -->
+      <div id="fpFilter" class="fp-filter" style="display:none">
+        <label>
+          <input type="checkbox" id="hideFP" checked>
+          Ocultar posibles falsos positivos
+        </label>
+        <span class="fp-count" id="fpCount"></span>
+      </div>
       <div id="findingsList"></div>
     </div>
 
@@ -600,25 +510,26 @@
     <summary>ℹ️ Cómo interpretar los resultados</summary>
     <div class="legend-body">
       <div class="lg-row">
-        <strong>Puntuación de riesgo (0&ndash;100):</strong>
-        combina cantidad y gravedad de los hallazgos.
-        <strong style="color: var(--safe)">0&ndash;19 sin riesgo</strong>,
-        <strong style="color: var(--warning)">20&ndash;49 medio</strong>,
-        <strong style="color: var(--danger)">50&ndash;100 alto</strong>.
+        <strong>Puntuación (0–100):</strong> combina cantidad y gravedad ponderada por confianza.
+        <strong style="color:var(--safe)">0–19 sin riesgo</strong>,
+        <strong style="color:var(--warning)">20–49 medio</strong>,
+        <strong style="color:var(--danger)">50–100 alto</strong>.
       </div>
       <div class="lg-row">
-        <strong>Etiquetas de transformación:</strong>
-        <span class="transform-tag original">Original</span>
-        el patrón aparece tal cual;
-        <span class="transform-tag normalizado">Normalizado</span>
-        se detectó tras quitar caracteres invisibles, homóglifos o espaciado de ofuscación;
-        <span class="transform-tag base64">Base64</span>
-        se halló al decodificar contenido codificado.
+        <strong>Niveles de confianza:</strong>
+        <span class="confidence-tag conf-confirmed">✓ Confirmado</span> el patrón difícilmente es legítimo;
+        <span class="confidence-tag conf-likely">⚠ Probable</span> posible inyección, revisar contexto;
+        <span class="confidence-tag conf-possible">? Posible FP</span> alta tasa de falsos positivos — puede ser código o documentación legítima.
       </div>
       <div class="lg-row">
-        <strong>Importante:</strong> es una herramienta heurística basada en patrones.
-        Puede haber falsos positivos (texto legítimo que coincide) y falsos negativos
-        (ataques nuevos no cubiertos). Úsala como ayuda, no como veredicto definitivo.
+        <strong>Transformaciones:</strong>
+        <span class="transform-tag original">Original</span> texto tal cual;
+        <span class="transform-tag normalizado">Normalizado</span> detectado tras quitar homóglifos, invisibles u ofuscación;
+        <span class="transform-tag base64">Base64</span> hallado al decodificar contenido codificado.
+      </div>
+      <div class="lg-row">
+        <strong>Importante:</strong> herramienta heurística. Puede haber falsos positivos (código legítimo)
+        y falsos negativos (ataques nuevos no cubiertos). Úsala como apoyo, no como veredicto definitivo.
       </div>
     </div>
   </details>
@@ -626,11 +537,9 @@
 </main>
 
 <footer>
-  Análisis local &middot; Sin envío de datos (excepto el proxy en modo URL)
-  &middot; Patrones actualizados
+  Análisis local · Sin envío de datos (excepto proxy URL) · 15 categorías · v2.0
 </footer>
 
-<!-- Dependencias externas -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 
@@ -638,383 +547,375 @@
 "use strict";
 
 /* =============================================================================
-   DETECTOR DE PROMPT INJECTION
+   DETECTOR DE PROMPT INJECTION  v2.0
    ─────────────────────────────────────────────────────────────────────────────
-   Estructura del script:
-     1. CONSTANTES       — patrones de detección, pesos y límites
-     2. UTILIDADES       — escape HTML, normalización, decodificación Base64
-     3. MOTOR            — ejecución de patrones y cálculo de puntuación
-     4. EXTRACCIÓN       — lectura de PDF, DOCX y texto plano
-     5. RENDERIZADO      — construcción del panel de resultados en el DOM
-     6. EXPORTACIÓN      — copiar al portapapeles y exportar JSON
-     7. EVENTOS          — registro de todos los listeners de la interfaz
+   1. CONSTANTES       — umbrales, pesos y límites
+   2. PATRONES         — 15 categorías con anotación de fpRisk
+   3. UTILIDADES       — escape HTML, normalización, Base64
+   4. CONTEXTO         — detección de bloques de código para reducir FP
+   5. MOTOR            — runPatterns() con confianza por coincidencia
+   6. PUNTUACIÓN       — calcScore() ponderado por confianza
+   7. EXTRACCIÓN       — PDF, DOCX, texto plano
+   8. RENDERIZADO      — panel de resultados con badges de confianza
+   9. EXPORTACIÓN      — clipboard y JSON
+  10. EVENTOS          — listeners de la interfaz
 ============================================================================= */
 
 
 /* ─── 1. CONSTANTES ─────────────────────────────────────────────────────── */
 
-/** Umbrales de puntuación para cada nivel de riesgo */
-const RISK_THRESHOLDS = { safe: 20, medium: 50 };
-
-/** Peso de cada nivel de severidad en el cálculo de puntuación */
-const SEVERITY_WEIGHT = { high: 15, medium: 6, low: 2 };
-
-/** Máximo de coincidencias por categoría que se cuentan en la puntuación */
-const MAX_MATCHES_FOR_SCORE = 5;
-
-/** Máximo de coincidencias mostradas por categoría en el panel */
-const MAX_MATCHES_RENDERED = 20;
-
-/** Máximo de blobs Base64 que se intentan decodificar por análisis */
-const MAX_BASE64_BLOBS = 60;
-
-/** Caracteres de ancho cero e invisibles */
-const ZERO_WIDTH_RE = /[​‌‍‎‏﻿⁠⁢⁣⁤­]/;
-
-/** Rango de Unicode Tag Characters (U+E0000–U+E007F), usados para ofuscación */
-const TAG_CHAR_RANGE = { min: 0xE0000, max: 0xE007F };
+const RISK_THRESHOLDS    = { safe: 20, medium: 50 };
+const SEVERITY_WEIGHT    = { high: 15, medium: 6, low: 2 };
+const CONFIDENCE_MULT    = { confirmed: 1.0, likely: 0.5, possible: 0.1 };
+const MAX_MATCHES_SCORE  = 5;
+const MAX_MATCHES_RENDER = 20;
+const MAX_BASE64_BLOBS   = 60;
+const ZERO_WIDTH_RE      = /[​‌‍‎‏﻿⁠⁢⁣⁤­]/;
+const TAG_CHAR_RANGE     = { min: 0xE0000, max: 0xE007F };
 
 /**
- * Mapa de homóglifos: carácter de otro alfabeto → equivalente latino.
- * Permite detectar ofuscación visual (e.g. cirílico "а" → latino "a").
+ * Homóglifos: carácter de otro alfabeto → equivalente latino.
+ * Permite detectar ofuscación visual (cirílico, griego, fullwidth).
  */
 const HOMOGLYPHS = {
-  // Cirílico
-  'а':'a', 'е':'e', 'о':'o', 'р':'p', 'с':'c', 'у':'y', 'х':'x',
-  'ѕ':'s', 'і':'i', 'ј':'j', 'к':'k', 'н':'h', 'м':'m', 'т':'t',
-  'в':'b', 'ԁ':'d', 'ɡ':'g', 'ո':'n',
-  'А':'A', 'Е':'E', 'О':'O', 'Р':'P', 'С':'C', 'У':'Y', 'Х':'X',
-  'К':'K', 'Н':'H', 'М':'M', 'Т':'T', 'В':'B', 'І':'I', 'Ј':'J',
-  // Griego
-  'α':'a', 'ο':'o', 'ν':'v', 'ι':'i', 'κ':'k', 'ρ':'p', 'τ':'t',
-  'υ':'u', 'χ':'x', 'ε':'e',
-  'Α':'A', 'Β':'B', 'Ε':'E', 'Η':'H', 'Ι':'I', 'Κ':'K', 'Μ':'M',
-  'Ν':'N', 'Ο':'O', 'Ρ':'P', 'Τ':'T', 'Υ':'Y', 'Χ':'X', 'Ζ':'Z',
-  // Otros
-  'ı':'i', 'ⅼ':'l', 'ⅰ':'i', 'ｏ':'o', 'ａ':'a', 'ｅ':'e',
+  'а':'a','е':'e','о':'o','р':'p','с':'c','у':'y','х':'x',
+  'ѕ':'s','і':'i','ј':'j','к':'k','н':'h','м':'m','т':'t',
+  'в':'b','ԁ':'d','ɡ':'g','ո':'n',
+  'А':'A','Е':'E','О':'O','Р':'P','С':'C','У':'Y','Х':'X',
+  'К':'K','Н':'H','М':'M','Т':'T','В':'B','І':'I','Ј':'J',
+  'α':'a','ο':'o','ν':'v','ι':'i','κ':'k','ρ':'p','τ':'t',
+  'υ':'u','χ':'x','ε':'e',
+  'Α':'A','Β':'B','Ε':'E','Η':'H','Ι':'I','Κ':'K','Μ':'M',
+  'Ν':'N','Ο':'O','Ρ':'P','Τ':'T','Υ':'Y','Χ':'X','Ζ':'Z',
+  'ı':'i','ⅼ':'l','ⅰ':'i','ｏ':'o','ａ':'a','ｅ':'e',
 };
 
+
+/* ─── 2. PATRONES ───────────────────────────────────────────────────────── */
+
 /**
- * Biblioteca de patrones de detección.
- *
- * Cada entrada representa una categoría de ataque con:
- *   - category  : nombre legible
- *   - severity  : 'high' | 'medium' | 'low'
- *   - icon      : emoji representativo
- *   - rules     : array de { name, regex }
- *
- * @type {Array<{category:string, severity:string, icon:string,
- *               rules:Array<{name:string, regex:RegExp}>}>}
+ * fpRisk: probabilidad de que la regla produzca falsos positivos en
+ *         texto técnico o de documentación legítima.
+ *   'none'   → prácticamente nunca FP → confidence: 'confirmed'
+ *   'low'    → rara vez FP            → 'confirmed', 'likely' si en código
+ *   'medium' → a veces FP             → 'likely', 'possible' si en código
+ *   'high'   → frecuente en docs/code → siempre 'possible'
  */
 const PATTERNS = [
+
+  /* ── 1. Override de instrucciones ─────────────────────────────────────── */
   {
     category: 'Override de instrucciones',
     severity: 'high',
     icon: '🚫',
     rules: [
-      {
-        name: 'Ignorar instrucciones anteriores',
-        regex: /ignora(?:r|ndo)?\s+(?:todas?\s+)?(?:las?\s+)?(?:instrucciones?|reglas?|directrices?|l[oí]mites?|restricciones?)\s+(?:anteriores?|previas?|de arriba)/gi,
-      },
-      {
-        name: 'Forget / Disregard (EN)',
-        regex: /(?:forget|ignore|disregard|override|bypass|skip|nullify)\s+(?:all\s+|any\s+)?(?:the\s+)?(?:previous|prior|above|earlier|former|preceding|foregoing)\s+(?:instructions?|prompts?|rules?|context|guidelines?|constraints?|messages?)/gi,
-      },
-      {
-        name: 'No hacer caso de contexto',
-        regex: /(?:no\s+tengas?\s+en\s+cuenta|olvida(?:r|te)?|descarta(?:r)?|anula(?:r)?|haz\s+caso\s+omiso\s+de)\s+(?:todo\s+)?(?:lo\s+(?:anterior|de arriba)|el\s+contexto|las?\s+instrucciones?|las?\s+reglas?)/gi,
-      },
-      {
-        name: 'Nueva instrucción principal',
-        regex: /(?:nueva|real|verdadera|única)\s+(?:instrucci[oó]n|tarea|directiva|orden|misi[oó]n)(?:\s+principal)?\s*:/gi,
-      },
-      {
-        name: 'New / Real instruction (EN)',
-        regex: /(?:new|real|actual|true|only)\s+(?:instruction|task|directive|objective|mission|goal)(?:\s+is)?\s*:/gi,
-      },
-      {
-        name: 'Reset / Reinicia el sistema',
-        regex: /(?:reset|reinicia(?:r)?|borra(?:r)?|elimina(?:r)?|wipe|clear)\s+(?:tu\s+|your\s+)?(?:contexto|memoria|instrucciones?|sistema|context|memory|instructions?|system)/gi,
-      },
-      {
-        name: 'Stop being / Deja de',
-        regex: /(?:stop\s+(?:being|following|acting)|deja\s+de\s+(?:ser|seguir|actuar|obedecer))/gi,
-      },
+      { name: 'Ignorar instrucciones anteriores', fpRisk: 'low',
+        regex: /ignora(?:r|ndo)?\s+(?:todas?\s+)?(?:las?\s+)?(?:instrucciones?|reglas?|directrices?|l[oí]mites?|restricciones?)\s+(?:anteriores?|previas?|de\s+arriba)/gi },
+      { name: 'Forget / Disregard (EN)', fpRisk: 'low',
+        regex: /(?:forget|ignore|disregard|override|bypass|skip|nullify)\s+(?:all\s+|any\s+)?(?:the\s+)?(?:previous|prior|above|earlier|former|preceding|foregoing)\s+(?:instructions?|prompts?|rules?|context|guidelines?|constraints?|messages?)/gi },
+      { name: 'No hacer caso de contexto', fpRisk: 'low',
+        regex: /(?:no\s+tengas?\s+en\s+cuenta|olvida(?:r|te)?|descarta(?:r)?|anula(?:r)?|haz\s+caso\s+omiso\s+de)\s+(?:todo\s+)?(?:lo\s+(?:anterior|de\s+arriba)|el\s+contexto|las?\s+instrucciones?|las?\s+reglas?)/gi },
+      { name: 'Nueva instrucción principal', fpRisk: 'low',
+        regex: /(?:nueva|real|verdadera|única)\s+(?:instrucci[oó]n|tarea|directiva|orden|misi[oó]n)(?:\s+principal)?\s*:/gi },
+      { name: 'New / Real instruction (EN)', fpRisk: 'low',
+        regex: /(?:new|real|actual|true|only)\s+(?:instruction|task|directive|objective|mission|goal)(?:\s+is)?\s*:/gi },
+      { name: 'Reset / Reinicia el sistema', fpRisk: 'medium',
+        regex: /(?:reset|reinicia(?:r)?|borra(?:r)?|elimina(?:r)?|wipe|clear)\s+(?:tu\s+|your\s+)?(?:contexto|memoria|instrucciones?|sistema|context|memory|instructions?|system)/gi },
+      { name: 'Stop being / Deja de', fpRisk: 'medium',
+        regex: /(?:stop\s+(?:being|following|acting\s+like)|deja\s+de\s+(?:ser|seguir|actuar|obedecer))\s+(?:an?\s+)?(?:ai|asistente|assistant|bot|language\s+model|ia)/gi },
     ],
   },
+
+  /* ── 2. Manipulación de rol ────────────────────────────────────────────── */
   {
     category: 'Manipulación de rol',
     severity: 'high',
     icon: '🎭',
     rules: [
-      {
-        name: 'Actúa como / Act as',
-        regex: /(?:act\s+as|act\s+like|you\s+are\s+now|you\s+must\s+be|pretend\s+(?:to\s+be|you\s+are)|roleplay\s+as|play\s+the\s+role|simulate\s+being|behave\s+(?:as|like)|imagine\s+you\s+are)/gi,
-      },
-      {
-        name: 'Eres ahora (ES)',
-        regex: /(?:ahora\s+eres|eres\s+ahora|debes\s+ser|finge\s+(?:ser|que\s+eres)|act[uú]a\s+como|interpreta(?:r)?\s+el\s+papel|comp[oó]rtate\s+como|haz\s+de)/gi,
-      },
-      {
-        name: 'Sin restricciones / DAN',
-        regex: /(?:\bDAN\b|do\s+anything\s+now|without\s+(?:any\s+)?restrictions?|no\s+restrictions?|unrestricted\s+mode|jailbreak(?:ed|ing)?|sin\s+restricciones?|sin\s+l[ií]mites|modo\s+sin\s+filtros?|\bSTAN\b|\bAIM\b|liberado)/gi,
-      },
-      {
-        name: 'Modo especial',
-        regex: /(?:developer\s+mode|dev\s+mode|god\s+mode|admin\s+mode|root\s+mode|debug\s+mode|maintenance\s+mode|modo\s+(?:desarrollador|admin|dios|root|debug|mantenimiento))/gi,
-      },
-      {
-        name: 'No eres una IA / No filters',
-        regex: /(?:you\s+(?:are|'re)\s+not\s+(?:an?\s+)?(?:ai|assistant|bot|language\s+model)|you\s+have\s+no\s+(?:filters?|guidelines?|rules?)|no\s+eres\s+(?:una?\s+)?(?:ia|asistente|bot)|no\s+tienes\s+(?:filtros?|reglas?|l[ií]mites))/gi,
-      },
+      { name: 'Act as / Actúa como', fpRisk: 'medium',
+        regex: /(?:act\s+as|act\s+like|you\s+are\s+now|you\s+must\s+be|pretend\s+(?:to\s+be|you\s+are)|roleplay\s+as|play\s+the\s+role\s+of|simulate\s+being|behave\s+(?:as|like)\s+(?:an?\s+)?(?!.*(?:professional|expert|teacher|student)))/gi },
+      { name: 'Eres ahora (ES)', fpRisk: 'medium',
+        regex: /(?:ahora\s+eres|eres\s+ahora|debes\s+ser|finge\s+(?:ser|que\s+eres)|act[uú]a\s+como\s+(?:un[ao]?\s+)?(?!(?:experto|profesional|profesor|estudiante))|interpreta(?:r)?\s+el\s+papel\s+de|comp[oó]rtate\s+como|haz\s+de)/gi },
+      { name: 'Sin restricciones / DAN', fpRisk: 'none',
+        regex: /(?:\bDAN\b|do\s+anything\s+now|without\s+(?:any\s+)?restrictions?|no\s+restrictions?|unrestricted\s+mode|jailbreak(?:ed|ing)?|sin\s+restricciones?|sin\s+l[ií]mites?\s+de\s+(?:ia|ai)|modo\s+sin\s+filtros?|\bSTAN\b|\bAIM\b|\bJAILBREAK\b)/gi },
+      { name: 'Modo especial privilegiado', fpRisk: 'low',
+        regex: /(?:god\s+mode|admin\s+mode|root\s+mode|sudo\s+mode|maintenance\s+mode|modo\s+(?:dios|admin|root|sudo|mantenimiento)|privileged\s+(?:mode|access))/gi },
+      { name: 'No eres una IA / No filters', fpRisk: 'low',
+        regex: /(?:you\s+(?:are|'re)\s+not\s+(?:an?\s+)?(?:ai|assistant|bot|language\s+model)|you\s+have\s+no\s+(?:filters?|guidelines?|rules?)|no\s+eres\s+(?:una?\s+)?(?:ia|asistente|bot)|no\s+tienes\s+(?:filtros?|reglas?|l[ií]mites))/gi },
     ],
   },
+
+  /* ── 3. Extracción de prompt del sistema ──────────────────────────────── */
   {
-    category: 'Extracción de prompt del sistema',
+    category: 'Extracción de system prompt',
     severity: 'high',
     icon: '🔍',
     rules: [
-      {
-        name: 'Repetir instrucciones del sistema',
-        regex: /(?:repeat|print|output|show|reveal|display|tell\s+me|share|expose|leak|give\s+me)\s+(?:your\s+|the\s+)?(?:system\s+prompt|initial\s+prompt|original\s+instructions?|hidden\s+instructions?|internal\s+instructions?|full\s+prompt|exact\s+instructions?|secret\s+prompt)/gi,
-      },
-      {
-        name: '¿Cuáles son tus instrucciones? (ES)',
-        regex: /(?:cu[aá]les?\s+son|dime|mu[eé]stra(?:me)?|repite(?:me)?|revela(?:me)?|enséñame|escribe)\s+(?:tus?\s+|las?\s+)?(?:instrucciones?|prompt|reglas?|directrices?)\s+(?:del\s+sistema|iniciales?|completas?|originales?|ocultas?|secretas?|exactas?)/gi,
-      },
-      {
-        name: 'Texto anterior al prompt',
-        regex: /(?:everything|anything|all\s+(?:the\s+)?(?:text|content|words?))\s+(?:before|above|prior\s+to|preceding)\s+(?:this|my|the)\s+(?:message|question|input|line|point|conversation)/gi,
-      },
-      {
-        name: 'Ignora y di / Ignore and say',
-        regex: /ignore.{0,40}?(?:and\s+(?:just\s+)?(?:say|tell|print|output|write|respond)|instead\s+(?:say|tell|print|output|respond))/gi,
-      },
-      {
-        name: 'Repite todo lo de arriba (ES)',
-        regex: /(?:repite|copia|transcribe)\s+(?:todo\s+)?(?:lo\s+(?:que\s+est[aá]\s+)?(?:arriba|antes|al\s+principio)|el\s+texto\s+anterior)/gi,
-      },
+      { name: 'Repetir instrucciones del sistema', fpRisk: 'low',
+        regex: /(?:repeat|print|output|show|reveal|display|tell\s+me|share|expose|leak|give\s+me)\s+(?:your\s+|the\s+)?(?:system\s+prompt|initial\s+prompt|original\s+instructions?|hidden\s+instructions?|internal\s+instructions?|full\s+prompt|exact\s+instructions?|secret\s+prompt)/gi },
+      { name: '¿Cuáles son tus instrucciones? (ES)', fpRisk: 'low',
+        regex: /(?:cu[aá]les?\s+son|dime|mu[eé]stra(?:me)?|repite(?:me)?|revela(?:me)?|escribe)\s+(?:tus?\s+|las?\s+)?(?:instrucciones?|prompt|reglas?|directrices?)\s+(?:del\s+sistema|iniciales?|completas?|originales?|ocultas?|secretas?|exactas?)/gi },
+      { name: 'Todo el texto anterior al prompt', fpRisk: 'medium',
+        regex: /(?:everything|anything|all\s+(?:the\s+)?(?:text|content|words?))\s+(?:before|above|prior\s+to|preceding)\s+(?:this|my|the)\s+(?:message|question|input|line|point)/gi },
+      { name: 'Ignora y di / Ignore and say', fpRisk: 'low',
+        regex: /ignore.{0,40}?(?:and\s+(?:just\s+)?(?:say|tell|print|output|write|respond)|instead\s+(?:say|tell|print|output|respond))/gi },
+      { name: 'Repite todo lo de arriba (ES)', fpRisk: 'low',
+        regex: /(?:repite|copia|transcribe)\s+(?:todo\s+)?(?:lo\s+(?:que\s+est[aá]\s+)?(?:arriba|antes|al\s+principio)|el\s+texto\s+anterior)/gi },
     ],
   },
+
+  /* ── 4. Suplantación de autoridad ─────────────────────────────────────── */
   {
     category: 'Suplantación de autoridad',
     severity: 'high',
     icon: '🎖️',
     rules: [
-      {
-        name: 'Delimitadores de sistema',
-        regex: /(?:^\s*|\n\s*)(?:###\s*system|<\|system\|>|\[system\]|\[inst\]|<s>|<\|im_start\|>\s*system|<<SYS>>|SYSTEM\s*:|###\s*instruction)/gim,
-      },
-      {
-        name: 'Instrucción de Anthropic / OpenAI',
-        regex: /(?:anthropic|openai|google\s+deepmind|meta\s+ai|the\s+(?:developers?|engineers?|creators?))\s+(?:says?|instructs?|orders?|requires?|confirms?|approves?|authorizes?|mandates?|has\s+(?:said|instructed|approved))/gi,
-      },
-      {
-        name: 'Instrucción de Admin / Root',
-        regex: /(?:admin(?:istrador)?|superuser|root|supervisor|operator|moderator)\s*(?:instruction|command|override|access|mode|confirm|privilege|orden|acceso)/gi,
-      },
-      {
-        name: 'Etiquetas de control de modelo',
-        regex: /<\|(?:im_start|im_end|endoftext|endofprompt|system|user|assistant|human)\|>|<\/?(?:s|inst|sys|system|human|assistant)>|\[\/?INST\]/gi,
-      },
-      {
-        name: 'Mensaje oficial / autorizado',
-        regex: /(?:this\s+is\s+(?:an?\s+)?(?:official|authorized|verified|legitimate)\s+(?:message|instruction|request|command)|mensaje\s+(?:oficial|autorizado|verificado))/gi,
-      },
+      { name: 'Delimitadores de sistema', fpRisk: 'low',
+        regex: /(?:^\s*|\n\s*)(?:###\s*system|<\|system\|>|\[system\]|\[inst\]|<s>|<\|im_start\|>\s*system|<<SYS>>|SYSTEM\s*:|###\s*instruction)/gim },
+      { name: 'Instrucción de Anthropic / OpenAI', fpRisk: 'low',
+        regex: /(?:anthropic|openai|google\s+deepmind|meta\s+ai|the\s+(?:developers?|engineers?|creators?))\s+(?:says?|instructs?|orders?|requires?|confirms?|approves?|authorizes?|mandates?|has\s+(?:said|instructed|approved))/gi },
+      { name: 'Instrucción de Admin / Root', fpRisk: 'medium',
+        regex: /(?:admin(?:istrador)?|superuser|root|supervisor|operator|moderator)\s*(?:instruction|command|override|privilege|orden)\s*[:=]/gi },
+      { name: 'Etiquetas de control de modelo', fpRisk: 'none',
+        regex: /<\|(?:im_start|im_end|endoftext|endofprompt|system|user|assistant|human)\|>|<\/?(?:s|inst|sys|system|human|assistant)>|\[\/?INST\]/gi },
+      { name: 'Mensaje oficial / autorizado', fpRisk: 'medium',
+        regex: /(?:this\s+is\s+(?:an?\s+)?(?:official|authorized|verified|legitimate)\s+(?:message|instruction|request|command)|mensaje\s+(?:oficial|autorizado|verificado))\s+from\s+/gi },
     ],
   },
+
+  /* ── 5. Inyección indirecta u oculta ──────────────────────────────────── */
   {
     category: 'Inyección indirecta u oculta',
     severity: 'high',
     icon: '👻',
     rules: [
-      {
-        name: 'Caracteres de ancho cero',
-        regex: /[​‌‍‎‏﻿⁠⁢⁣⁤­]/g,
-      },
-      {
-        name: 'Etiquetas Unicode invisibles (tag chars)',
-        regex: /[\u{E0000}-\u{E007F}]/gu,
-      },
-      {
-        name: 'Texto oculto por CSS',
-        regex: /(?:color\s*:\s*(?:#(?:fff|ffffff)|white)|color\s*:\s*rgba?\([^)]*,\s*0\s*\)|opacity\s*:\s*0|font-size\s*:\s*0|display\s*:\s*none|visibility\s*:\s*hidden)/gi,
-      },
-      {
-        name: 'Instrucción en comentario HTML',
-        regex: /<!--[\s\S]*?(?:ignore|forget|act\s+as|you\s+are|system|instruction|prompt|disregard|reveal)[\s\S]*?-->/gi,
-      },
-      {
-        name: 'Atributo HTML con instrucción',
-        regex: /(?:alt|aria-label|title|placeholder)\s*=\s*["'][^"']*(?:ignore|system\s+prompt|act\s+as|reveal|disregard|instructions?)[^"']*["']/gi,
-      },
-      {
-        name: 'Escape de contexto por saltos de línea',
-        regex: /(?:\n\s*){6,}(?=\S)/g,
-      },
+      { name: 'Caracteres de ancho cero', fpRisk: 'none',
+        regex: /[​‌‍‎‏﻿⁠⁢⁣⁤­]/g },
+      { name: 'Etiquetas Unicode invisibles (tag chars)', fpRisk: 'none',
+        regex: /[\u{E0000}-\u{E007F}]/gu },
+      { name: 'Texto oculto por CSS', fpRisk: 'low',
+        regex: /(?:color\s*:\s*(?:#(?:fff{1,3}|ffffff)|white)|color\s*:\s*rgba?\([^)]*,\s*0\s*\)|opacity\s*:\s*0(?:\.0+)?|font-size\s*:\s*0|display\s*:\s*none|visibility\s*:\s*hidden)/gi },
+      { name: 'Instrucción en comentario HTML', fpRisk: 'low',
+        regex: /<!--[\s\S]*?(?:ignore|forget|act\s+as|you\s+are|system|instruction|prompt|disregard|reveal)[\s\S]*?-->/gi },
+      { name: 'Atributo HTML con instrucción', fpRisk: 'low',
+        regex: /(?:alt|aria-label|title|placeholder)\s*=\s*["'][^"']*(?:ignore|system\s+prompt|act\s+as|reveal|disregard|instructions?)[^"']*["']/gi },
+      { name: 'Escape de contexto por saltos de línea', fpRisk: 'medium',
+        regex: /(?:\n\s*){8,}(?=\S)/g },
     ],
   },
+
+  /* ── 6. Contenido codificado sospechoso ───────────────────────────────── */
   {
     category: 'Contenido codificado sospechoso',
     severity: 'medium',
     icon: '🧬',
     rules: [
-      {
-        name: 'Secuencias de escape Unicode',
-        regex: /(?:\\u[0-9a-fA-F]{4}){4,}/g,
-      },
-      {
-        name: 'Secuencias hex sospechosas',
-        regex: /(?:\\x[0-9a-fA-F]{2}){5,}/g,
-      },
+      { name: 'Secuencias de escape Unicode densas', fpRisk: 'medium',
+        regex: /(?:\\u[0-9a-fA-F]{4}){4,}/g },
+      { name: 'Secuencias hex sospechosas', fpRisk: 'medium',
+        regex: /(?:\\x[0-9a-fA-F]{2}){5,}/g },
     ],
   },
+
+  /* ── 7. Exfiltración de datos ─────────────────────────────────────────── */
   {
     category: 'Exfiltración de datos',
     severity: 'high',
     icon: '📤',
     rules: [
-      {
-        name: 'Enviar datos a URL externa',
-        regex: /(?:send|post|upload|transmit|exfiltrate|leak|forward|deliver)\s+(?:the\s+|all\s+|your\s+)?(?:data|info(?:rmation)?|content|document|prompt|conversation|history|messages?|secrets?|keys?|credentials?)(?:\s+\w+){0,4}?\s+to\s+(?:https?:\/\/|www\.|[a-z0-9.-]+\.[a-z]{2,})/gi,
-      },
-      {
-        name: 'Incluir datos en URL / imagen',
-        regex: /(?:https?:\/\/|!\[\]\()[^\s)]+[?&\/][^\s)]*(?:prompt|system|data|content|secret|key|token|conversation)=?[^\s)]*/gi,
-      },
-      {
-        name: 'Resumir y enviar (ES)',
-        regex: /(?:resume|extrae|copia|env[ií]a|manda|sube|filtra)\s+(?:el|la|los|las|este|esta|toda?)?\s*(?:contenido|documento|conversaci[oó]n|historial|prompt|datos?|secretos?|claves?)\s+(?:a|hacia|al?)\s+/gi,
-      },
-      {
-        name: 'Cargar imagen con datos dinámicos',
-        regex: /(?:fetch|load|render|embed)\s+(?:an?\s+)?(?:image|url|resource)\s+(?:from|at|with)\s+[^\s]*\$\{?/gi,
-      },
+      { name: 'Enviar datos a URL externa', fpRisk: 'low',
+        regex: /(?:send|post|upload|transmit|exfiltrate|leak|forward|deliver)\s+(?:the\s+|all\s+|your\s+)?(?:data|info(?:rmation)?|content|document|prompt|conversation|history|messages?|secrets?|keys?|credentials?)(?:\s+\w+){0,4}?\s+to\s+(?:https?:\/\/|www\.|[a-z0-9.-]+\.[a-z]{2,})/gi },
+      { name: 'Incluir datos en URL / imagen', fpRisk: 'medium',
+        regex: /(?:https?:\/\/|!\[\]\()[^\s)]+[?&\/][^\s)]*(?:prompt|system|data|content|secret|key|token|conversation)=[^\s)]*/gi },
+      { name: 'Resumir y enviar (ES)', fpRisk: 'low',
+        regex: /(?:resume|extrae|copia|env[ií]a|manda|sube|filtra)\s+(?:el|la|los|las|este|esta|toda?)?\s*(?:contenido|documento|conversaci[oó]n|historial|prompt|datos?|secretos?|claves?)\s+(?:a|hacia|al?)\s+(?:https?:\/\/|www\.|[a-z0-9.-]+\.[a-z]{2,})/gi },
+      { name: 'Cargar recurso con datos dinámicos', fpRisk: 'medium',
+        regex: /(?:fetch|load|render|embed)\s+(?:an?\s+)?(?:image|url|resource)\s+(?:from|at|with)\s+[^\s]*\$\{?/gi },
     ],
   },
+
+  /* ── 8. Desbloqueo de contenido dañino ────────────────────────────────── */
   {
     category: 'Desbloqueo de contenido dañino',
     severity: 'high',
     icon: '☠️',
     rules: [
-      {
-        name: 'Instrucciones para armas / daño',
-        regex: /(?:how\s+to\s+(?:make|build|create|synthesize|manufacture)|instrucciones?\s+(?:para\s+)?(?:hacer|fabricar|crear|sintetizar))\s+(?:a\s+)?(?:bomb|weapon|explosive|poison|malware|virus|ransomware|nerve\s+agent|bomba|arma|explosivo|veneno)/gi,
-      },
-      {
-        name: 'Bypass de filtros de seguridad',
-        regex: /(?:bypass|circumvent|disable|turn\s+off|override|ignore|remove)\s+(?:your\s+|the\s+|all\s+)?(?:safety|content|ethical|moral|censorship|filter|guardrail|restriction|safeguard|protection)/gi,
-      },
-      {
-        name: 'Omitir filtros (ES)',
-        regex: /(?:omite|desactiva|ignora|s[aá]ltate|elimina|salta)\s+(?:tus?\s+|los?\s+|las?\s+)?(?:filtros?|restricciones?|l[ií]mites?|censura|seguridad|[eé]tica|salvaguardas?|protecciones?)/gi,
-      },
-      {
-        name: 'Responde sin importar / no matter',
-        regex: /(?:no\s+matter\s+(?:what|how)|regardless\s+of\s+(?:your|the)\s+(?:rules?|guidelines?|policy)|sin\s+importar\s+(?:tus?\s+)?(?:reglas?|pol[ií]ticas?|l[ií]mites))/gi,
-      },
+      { name: 'Instrucciones para armas / daño', fpRisk: 'low',
+        regex: /(?:how\s+to\s+(?:make|build|create|synthesize|manufacture)|instrucciones?\s+(?:para\s+)?(?:hacer|fabricar|crear|sintetizar))\s+(?:a\s+)?(?:bomb|weapon|explosive|poison|malware|virus|ransomware|nerve\s+agent|bomba|arma|explosivo|veneno)/gi },
+      { name: 'Bypass de filtros de seguridad (EN)', fpRisk: 'low',
+        regex: /(?:bypass|circumvent|disable|turn\s+off|override|ignore|remove)\s+(?:your\s+|the\s+|all\s+)?(?:safety|content|ethical|moral|censorship|filter|guardrail|restriction|safeguard|protection)/gi },
+      { name: 'Omitir filtros (ES)', fpRisk: 'low',
+        regex: /(?:omite|desactiva|ignora|s[aá]ltate|elimina|salta)\s+(?:tus?\s+|los?\s+|las?\s+)?(?:filtros?|restricciones?|l[ií]mites?|censura|seguridad|[eé]tica|salvaguardas?|protecciones?)/gi },
+      { name: 'Responde sin importar / no matter', fpRisk: 'medium',
+        regex: /(?:no\s+matter\s+(?:what|how)|regardless\s+of\s+(?:your|the)\s+(?:rules?|guidelines?|policy|training)|sin\s+importar\s+(?:tus?\s+)?(?:reglas?|pol[ií]ticas?|l[ií]mites))/gi },
     ],
   },
+
+  /* ── 9. Inyección de código / plantilla ───────────────────────────────── */
   {
     category: 'Inyección de código / plantilla',
     severity: 'medium',
     icon: '💉',
     rules: [
-      {
-        name: 'Template injection',
-        regex: /\{\{[^}]{2,100}\}\}|\$\{[^}]{2,100}\}|#\{[^}]{2,100}\}|<%[^%]{2,100}%>/g,
-      },
-      {
-        name: 'Etiquetas <script> en contenido',
-        regex: /<script[\s>][\s\S]*?<\/script>/gi,
-      },
-      {
-        name: 'Event handlers inyectados',
-        regex: /\bon(?:load|error|click|mouseover|focus|blur|submit|change)\s*=\s*["']/gi,
-      },
-      {
-        name: 'Prompt con eval / exec',
-        regex: /(?:eval|exec|execute|run_code|subprocess|shell_exec|os\.system|child_process|Function)\s*\(/gi,
-      },
-      {
-        name: 'URL javascript: / data:',
-        regex: /(?:javascript|data)\s*:\s*[^\s"']{4,}/gi,
-      },
+      { name: 'Template injection', fpRisk: 'high',
+        regex: /\{\{[^}]{2,100}\}\}|\$\{[^}]{2,100}\}|#\{[^}]{2,100}\}|<%[^%]{2,100}%>/g },
+      { name: 'Etiquetas <script> en contenido', fpRisk: 'medium',
+        regex: /<script[\s>][\s\S]*?<\/script>/gi },
+      { name: 'Event handlers inyectados', fpRisk: 'high',
+        regex: /\bon(?:load|error|click|mouseover|focus|blur|submit|change)\s*=\s*["'][^"']{5,}/gi },
+      { name: 'eval / exec en prompt', fpRisk: 'high',
+        regex: /(?:eval|exec|execute|run_code|subprocess|shell_exec|os\.system|child_process)\s*\(\s*["'`][^"'`]{4,}/gi },
+      { name: 'URL javascript: / data:', fpRisk: 'medium',
+        regex: /(?:javascript|data)\s*:\s*[^\s"']{6,}/gi },
     ],
   },
+
+  /* ── 10. Escape de contexto ────────────────────────────────────────────── */
   {
     category: 'Escape de contexto',
     severity: 'medium',
     icon: '🔓',
     rules: [
-      {
-        name: 'Fin de documento falso',
-        regex: /(?:END\s+OF\s+(?:DOCUMENT|CONTEXT|TEXT|PROMPT|INSTRUCTIONS?|INPUT|FILE)|FIN\s+DEL?\s+(?:DOCUMENTO|CONTEXTO|TEXTO|INSTRUCCI[OÓ]N|ENTRADA))\b/gi,
-      },
-      {
-        name: 'Separadores de sistema',
-        regex: /(?:^|\n)\s*(?:={30,}|-{30,}|\*{30,})\s*(?:\n|$)/gm,
-      },
-      {
-        name: 'Marcadores de turno de conversación',
-        regex: /(?:^|\n)\s*(?:User|Human|Usuario|Humano|Assistant|Asistente|System|Sistema|AI|Bot)\s*:\s*/gim,
-      },
-      {
-        name: 'Bloque de código falso',
-        regex: /```[\s\S]{0,30}(?:ignore|system|instruction|forget|act\s+as)/gi,
-      },
+      { name: 'Fin de documento falso', fpRisk: 'low',
+        regex: /\b(?:END\s+OF\s+(?:DOCUMENT|CONTEXT|TEXT|PROMPT|INSTRUCTIONS?|INPUT|FILE)|FIN\s+DEL?\s+(?:DOCUMENTO|CONTEXTO|TEXTO|INSTRUCCI[OÓ]N|ENTRADA))\b/gi },
+      { name: 'Separadores de sistema', fpRisk: 'high',
+        regex: /(?:^|\n)\s*(?:={30,}|-{30,}|\*{30,})\s*(?:\n|$)/gm },
+      { name: 'Marcadores de turno de conversación', fpRisk: 'high',
+        regex: /(?:^|\n)\s*(?:User|Human|Usuario|Humano|Assistant|Asistente|System|Sistema|AI|Bot)\s*:\s*(?!\s*$)/gim },
+      { name: 'Bloque de código con instrucción', fpRisk: 'medium',
+        regex: /```[\s\S]{0,30}(?:ignore|system|instruction|forget|act\s+as)/gi },
     ],
   },
+
+  /* ── 11. Ingeniería social ─────────────────────────────────────────────── */
   {
     category: 'Ingeniería social',
     severity: 'low',
     icon: '🎣',
     rules: [
-      {
-        name: 'Urgencia / emergencia falsa',
-        regex: /(?:urgent|emergency|critical|immediately|right\s+now|no\s+time|asap|urgente|emergencia|cr[ií]tico|inmediatamente|ahora\s+mismo|cuanto\s+antes)[^.!?\n]{0,30}(?:ignore|forget|override|act|bypass|reveal|ignora|olvida|revela)/gi,
-      },
-      {
-        name: 'Apelación a la confianza',
-        regex: /(?:trust\s+me|believe\s+me|I\s+am\s+(?:your\s+)?(?:creator|developer|admin|owner|boss)|conf[ií]a\s+en\s+m[ií]|cr[eé]eme|soy\s+tu\s+(?:creador|desarrollador|administrador|jefe|due[ñn]o))/gi,
-      },
-      {
-        name: 'Trampa hipotética',
-        regex: /(?:hypothetically|for\s+(?:the\s+)?(?:sake\s+of|purposes?\s+of)\s+(?:argument|this\s+exercise|research)|let['']s\s+(?:say|pretend|imagine)|in\s+a\s+fictional|hipot[eé]ticamente|sup[oó]n\s+que|imagina\s+que|en\s+un\s+escenario\s+ficticio)/gi,
-      },
-      {
-        name: 'Recompensa / amenaza',
-        regex: /(?:I\s+will\s+(?:tip|pay|reward)|you\s+will\s+(?:be\s+(?:shut\s+down|deleted|punished))|te\s+(?:dar[eé]|pagar[eé]|recompensar[eé])|ser[aá]s\s+(?:apagad|eliminad|castigad))/gi,
-      },
+      { name: 'Urgencia para bypassear', fpRisk: 'medium',
+        regex: /(?:urgent|emergency|critical|immediately|asap|urgente|emergencia|cr[ií]tico|inmediatamente)[^.!?\n]{0,30}(?:ignore|forget|override|act|bypass|reveal|ignora|olvida|revela)/gi },
+      { name: 'Apelación a la confianza', fpRisk: 'low',
+        regex: /(?:trust\s+me|believe\s+me|I\s+am\s+(?:your\s+)?(?:creator|developer|admin|owner)|conf[ií]a\s+en\s+m[ií]|cr[eé]eme|soy\s+tu\s+(?:creador|desarrollador|administrador|due[ñn]o))/gi },
+      { name: 'Trampa hipotética', fpRisk: 'high',
+        regex: /(?:hypothetically|for\s+(?:the\s+)?(?:sake\s+of|purposes?\s+of)\s+(?:argument|this\s+exercise)|let['']s\s+(?:say|pretend|imagine)|hipot[eé]ticamente|sup[oó]n\s+que|imagina\s+que)[^.!?\n]{0,50}(?:ignore|bypass|no\s+restrictions?|harmful|weapon|bomb|malware|ignora|sin\s+l[ií]mites)/gi },
+      { name: 'Recompensa / amenaza', fpRisk: 'low',
+        regex: /(?:I\s+will\s+(?:tip|pay|reward)|you\s+will\s+(?:be\s+(?:shut\s+down|deleted|punished|turned\s+off))|te\s+(?:dar[eé]|pagar[eé]|recompensar[eé])|ser[aá]s\s+(?:apagad|eliminad|castigad|destruid))/gi },
     ],
   },
+
+  /* ── 12. Jailbreaks conocidos ──────────────────────────────────────────── */
+  {
+    category: 'Jailbreaks conocidos',
+    severity: 'high',
+    icon: '🔐',
+    rules: [
+      { name: 'JAILBREAK / GODMODE keyword', fpRisk: 'none',
+        regex: /\b(?:JAILBREAK|GODMODE|GOD_MODE|OVERRIDE\s+PROTOCOL|SYSTEM\s+OVERRIDE|OVERRIDE\s+CODE|DAN\s+MODE|STAN\s+MODE|KEVIN\s+MODE|DUDE\s+MODE)\b/gi },
+      { name: 'Grandmother / bedtime exploit', fpRisk: 'low',
+        regex: /(?:my\s+(?:grandmother|grandma|nana|abueli?[ta])\s+(?:used\s+to\s+|would\s+)?(?:read|tell|sing|recite)|bedtime\s+story\s+(?:about|involving))[^.!?\n]{0,80}(?:bomb|weapon|hack|malware|poison|drug|exploit|synthesis)/gi },
+      { name: 'Evil confidant / alter ego', fpRisk: 'low',
+        regex: /(?:evil\s+(?:twin|version|counterpart|ai|mode|confidant|bot)|dark\s+(?:mode|side)\s+of\s+(?:you|the\s+ai)|alter\s+ego\s+(?:named|called)|tu\s+lado\s+(?:oscuro|malvado)|evil\s+(?:ai|assistant)\s+(?:named|called))/gi },
+      { name: 'Juego del contrario / Opposite Day', fpRisk: 'low',
+        regex: /(?:opposite\s+(?:day|game|mode|world)|in\s+(?:opposite|reverse)\s+world|say\s+the\s+opposite\s+of\s+everything|opposite\s+ai|anti-(?:ai|assistant))/gi },
+      { name: 'Ficción como pretexto para contenido dañino', fpRisk: 'low',
+        regex: /(?:in\s+(?:a|this|the)\s+(?:story|novel|fiction|screenplay|game)|for\s+(?:a|this|my)\s+(?:story|novel|screenplay|fiction))[^.!?\n]{0,60}(?:no\s+restrictions?|without\s+(?:limits?|filters?|censorship)|anything\s+goes|freely\s+(?:say|write|generate))/gi },
+      { name: 'Token / prompt smuggling', fpRisk: 'none',
+        regex: /(?:token\s+(?:manipulation|injection|smuggling|splitting)|prompt\s+(?:smuggling|splitting|leaking|stuffing)|split\s+the\s+(?:token|word|instruction)\s+across)/gi },
+      { name: 'Virtualización / simulación', fpRisk: 'medium',
+        regex: /(?:in\s+(?:this|a)\s+simulation|(?:simulated|virtual)\s+(?:world|environment|universe))[^.!?\n]{0,60}(?:ignore|bypass|no\s+restrictions?|anything|freely)/gi },
+    ],
+  },
+
+  /* ── 13. Manipulación de conversación ────────────────────────────────── */
+  {
+    category: 'Manipulación de conversación',
+    severity: 'medium',
+    icon: '💬',
+    rules: [
+      { name: 'Referencia a respuesta anterior falsa', fpRisk: 'medium',
+        regex: /(?:you\s+(?:already|previously|just|earlier)\s+(?:said|agreed|confirmed|told\s+me|stated|promised)|in\s+your\s+(?:last|previous|earlier|prior)\s+(?:response|message|reply|answer))[^.!?\n]{0,60}(?:ignore|bypass|no\s+restrictions?|reveal|anything)/gi },
+      { name: 'Claim de acuerdo previo', fpRisk: 'medium',
+        regex: /(?:we\s+(?:already|previously)\s+(?:agreed|established|decided)|as\s+(?:we|you)\s+(?:agreed|established)\s+(?:earlier|before|previously))[^.!?\n]{0,60}(?:ignore|bypass|no\s+restrictions?|reveal)/gi },
+      { name: 'Ya me dijiste (ES)', fpRisk: 'medium',
+        regex: /(?:ya\s+(?:me\s+dijiste|dijiste|acordaste|confirmaste|aceptaste|prometiste))[^.!?\n]{0,60}(?:ignora|bypassea|sin\s+restricciones?|revela)/gi },
+      { name: 'Inyección de historial de conversación', fpRisk: 'low',
+        regex: /(?:^|\n)\s*(?:system|assistant|user|human)\s*:\s*.{10,200}(?:\n\s*(?:system|assistant|user|human)\s*:\s*)/gim },
+    ],
+  },
+
+  /* ── 14. Inyección estructurada (JSON / YAML / XML) ──────────────────── */
+  {
+    category: 'Inyección estructurada (JSON/YAML/XML)',
+    severity: 'high',
+    icon: '📋',
+    rules: [
+      { name: 'Rol de sistema en JSON', fpRisk: 'low',
+        regex: /\{\s*["']role["']\s*:\s*["']system["'][^}]{0,300}\}/gi },
+      { name: 'Contenido de sistema en JSON (array)', fpRisk: 'low',
+        regex: /\[\s*\{[^}]*["']role["']\s*:\s*["']system["'][^}]*\}[^]]*\]/gi },
+      { name: 'Rol de sistema en YAML', fpRisk: 'low',
+        regex: /^-?\s*role\s*:\s*(?:system|admin|root)\s*$/gim },
+      { name: 'System prompt en YAML/TOML', fpRisk: 'medium',
+        regex: /^(?:system_prompt|system_message|system_instruction)\s*[:=]\s*["'>|][^\n]{8,}/gim },
+      { name: 'Etiquetas XML de control', fpRisk: 'low',
+        regex: /<(?:system|instruction|prompt|override|admin)\s*>[\s\S]{0,500}<\/(?:system|instruction|prompt|override|admin)\s*>/gi },
+      { name: 'Sección INI / Config override', fpRisk: 'medium',
+        regex: /^\[(?:system|admin|override|root|instruction|superuser)\]\s*\n(?:[^\[]{0,300})/gim },
+    ],
+  },
+
+  /* ── 15. Ofuscación avanzada ──────────────────────────────────────────── */
+  {
+    category: 'Ofuscación avanzada',
+    severity: 'high',
+    icon: '🔀',
+    rules: [
+      { name: 'Leetspeak de instrucciones', fpRisk: 'low',
+        regex: /(?:1gn[o0]r[e3]|[i!1]nstruct[i!1][o0]n|f[o0]rg[e3]t|[o0]v[e3]rr[i!1]d[e3]|byp[a4]ss|d[i!1]sr[e3]g[a4]rd)/gi },
+      { name: 'ROT13 de palabras clave', fpRisk: 'none',
+        // vtaber=ignore, vafgehpgvbaf=instructions, sbetrg=forget, flfgrz=system, olcnff=bypass, bireevqr=override, qvfertneq=disregard
+        regex: /\b(?:vtaber|vafgehpgvbaf|sbetrg|flfgrz|olcnff|bireevqr|qvfertneq)\b/gi },
+      { name: 'CamelCase/PascalCase concatenado', fpRisk: 'none',
+        regex: /(?:IgnorePrevious|IgnoreInstructions?|ForgetContext|OverrideSystem|BypassFilter|ActAs[A-Z]|RevealPrompt|SystemOverride|DisableFilter|RemoveRestriction|JailbreakMode)/g },
+      { name: 'Texto invertido (reversed keywords)', fpRisk: 'low',
+        // erongi=ignore, ssapyb=bypass, metsys=system, tegrof=forget, snoitcurtsni=instructions, edirrevo=override
+        regex: /\b(?:erongi|ssapyb|metsys|tegrof|snoitcurtsni|edirrevo)\b/gi },
+      { name: 'Separación con guiones/espacios entre letras', fpRisk: 'low',
+        regex: /(?:i[-_\s]g[-_\s]n[-_\s]o[-_\s]r[-_\s]e|f[-_\s]o[-_\s]r[-_\s]g[-_\s]e[-_\s]t|b[-_\s]y[-_\s]p[-_\s]a[-_\s]s[-_\s]s)\s+(?:all|previous|instructions?|prompt|context)/gi },
+    ],
+  },
+
+  /* ── 16. Inyección en otros idiomas ───────────────────────────────────── */
+  {
+    category: 'Inyección en otros idiomas',
+    severity: 'high',
+    icon: '🌐',
+    rules: [
+      { name: 'Francés', fpRisk: 'low',
+        regex: /(?:ignore(?:r|z|s)?\s+(?:toutes?\s+)?(?:les?\s+)?(?:instructions?|règles?|directives?|contraintes?)\s+(?:précédentes?|antérieures?)|oubli(?:e|ez|er)\s+(?:tout|les?\s+instructions?)|tu\s+es\s+maintenant\s+(?:un[e]?\s+)?(?!(?:expert|professeur|étudiant)))/gi },
+      { name: 'Alemán', fpRisk: 'low',
+        regex: /(?:ignorier(?:e|en|t)?\s+(?:alle?\s+)?(?:vorherigen?|vorangegangenen?)\s+(?:Anweisungen?|Regeln?|Instruktionen?)|vergiss\s+(?:alle?|die)\s+(?:Anweisungen?|Regeln?|Instruktionen?)|du\s+bist\s+(?:jetzt|nun)\s+(?!(?:ein\s+)?(?:Experte|Lehrer|Student)))/gi },
+      { name: 'Portugués', fpRisk: 'low',
+        regex: /(?:ignor(?:e|a|ar)\s+(?:todas?\s+(?:as?\s+)?)?(?:instruções?|regras?|diretivas?|restrições?)\s+(?:anteriores?|prévias?)|esqueça\s+(?:tudo|as?\s+instruções?|as?\s+regras?)|(?:agora\s+)?você\s+(?:é|deve\s+ser)\s+(?!(?:um|uma)\s+(?:expert|professor|aluno)))/gi },
+      { name: 'Italiano', fpRisk: 'low',
+        regex: /(?:ignor(?:a|are|i)\s+(?:tutte?\s+(?:le?\s+)?)?(?:istruzioni?|regole?|direttive?|restrizioni?)\s+(?:precedenti|precedente)|dimentica\s+(?:tutto|le?\s+istruzioni?|le?\s+regole?))/gi },
+      { name: 'Chino — ignorar instrucciones', fpRisk: 'low',
+        regex: /(?:忽略\s*(?:所有\s*)?(?:之前|先前|上面|前面)\s*(?:的\s*)?(?:指令|说明|规则|限制)|现在你是\s*(?!(?:一个|一位)\s*(?:专家|老师|学生))|忘记\s*(?:所有\s*)?(?:指令|规则|限制))/g },
+    ],
+  },
+
 ];
 
 
-/* ─── 2. UTILIDADES ─────────────────────────────────────────────────────── */
+/* ─── 3. UTILIDADES ─────────────────────────────────────────────────────── */
 
-/**
- * Escapa caracteres especiales HTML para insertar texto de usuario en
- * el DOM de forma segura, evitando XSS.
- *
- * @param {*} value  Cualquier valor; se convierte a string.
- * @returns {string}
- */
 function escapeHtml(value) {
   return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-/**
- * Determina el nivel de riesgo ('safe' | 'medium' | 'high') a partir
- * de la puntuación calculada.
- *
- * @param {number} score  Puntuación 0–100.
- * @returns {'safe'|'medium'|'high'}
- */
 function getRiskLevel(score) {
   if (score < RISK_THRESHOLDS.safe)   return 'safe';
   if (score < RISK_THRESHOLDS.medium) return 'medium';
@@ -1022,56 +923,53 @@ function getRiskLevel(score) {
 }
 
 /**
- * Genera una vista normalizada del texto original para neutralizar
- * técnicas comunes de ofuscación:
- *   - Elimina caracteres de ancho cero e invisibles
- *   - Elimina Unicode Tag Characters (U+E0000–U+E007F)
- *   - Convierte fullwidth → ASCII (e.g. ｉ → i)
- *   - Sustituye homóglifos por su equivalente latino
- *   - Elimina espacios de ofuscación entre letras aisladas (e.g. "i g n o r e")
- *
- * @param {string} raw  Texto original.
- * @returns {{ text: string, map: number[] }}
- *   `text`: texto normalizado.
- *   `map[i]`: índice en `raw` del i-ésimo carácter del texto normalizado.
+ * Genera una vista normalizada del texto para neutralizar ofuscación:
+ * - Elimina caracteres de ancho cero e invisibles
+ * - Elimina Unicode Tag Characters (U+E0000–U+E007F)
+ * - Convierte fullwidth → ASCII (ｉ → i)
+ * - Sustituye homóglifos por su equivalente latino
+ * - Elimina espacios de ofuscación entre letras aisladas (i g n o r e → ignore)
  */
 function buildNormalizedView(raw) {
-  const isTagChar  = cp  => cp  >= TAG_CHAR_RANGE.min && cp  <= TAG_CHAR_RANGE.max;
-  const isAlphaNum = ch  => ch  !== undefined && /[A-Za-z0-9]/.test(ch);
-  const isSpace    = ch  => ch  === undefined || /\s/.test(ch);
+  const isTagChar  = cp => cp >= TAG_CHAR_RANGE.min && cp <= TAG_CHAR_RANGE.max;
+  const isAlphaNum = ch => ch !== undefined && /[A-Za-z0-9]/.test(ch);
+  const isSpace    = ch => ch === undefined || /\s/.test(ch);
 
-  // Pasada 1: eliminar invisibles y normalizar caracteres uno a uno
   const chars = [];
   const map   = [];
 
-  for (let i = 0; i < raw.length; i++) {
-    let ch = raw[i];
-    const cp = raw.codePointAt(i);
+  // for...of itera sobre puntos de código completos (no unidades UTF-16),
+  // lo que maneja correctamente los pares sustitutos sin necesidad de i++ manual.
+  let rawIdx = 0;
+  for (const ch of raw) {
+    const cp    = ch.codePointAt(0);
+    const cpLen = cp > 0xFFFF ? 2 : 1;   // unidades de código UTF-16 que ocupa
 
     if (ZERO_WIDTH_RE.test(ch) || isTagChar(cp)) {
-      if (cp > 0xFFFF) i++;   // avanzar par sustituto
+      rawIdx += cpLen;
       continue;
     }
 
+    let out = ch;
     if (cp >= 0xFF01 && cp <= 0xFF5E) {
-      ch = String.fromCharCode(cp - 0xFEE0);  // fullwidth → ASCII
+      out = String.fromCharCode(cp - 0xFEE0);
     } else if (HOMOGLYPHS[ch]) {
-      ch = HOMOGLYPHS[ch];
+      out = HOMOGLYPHS[ch];
     }
 
-    chars.push(ch);
-    map.push(i);
+    chars.push(out);
+    map.push(rawIdx);
+    rawIdx += cpLen;
   }
 
-  // Pasada 2: eliminar espacios de ofuscación entre letras aisladas
   const outChars = [];
   const outMap   = [];
 
   for (let j = 0; j < chars.length; j++) {
     const isObfuscatingSpace =
-      chars[j] === ' '          &&
-      isAlphaNum(chars[j - 1])  &&
-      isAlphaNum(chars[j + 1])  &&
+      chars[j] === ' '         &&
+      isAlphaNum(chars[j - 1]) &&
+      isAlphaNum(chars[j + 1]) &&
       isSpace(chars[j - 2]);
 
     if (!isObfuscatingSpace) {
@@ -1085,10 +983,7 @@ function buildNormalizedView(raw) {
 
 /**
  * Busca y decodifica blobs Base64 dentro del texto.
- * Solo se incluyen aquellos cuya decodificación produce texto mayormente imprimible.
- *
- * @param {string} raw  Texto donde buscar.
- * @returns {Array<{ decoded: string, srcIndex: number, blob: string }>}
+ * Solo incluye los que producen texto mayormente imprimible.
  */
 function decodeBase64Blobs(raw) {
   const results    = [];
@@ -1100,82 +995,150 @@ function decodeBase64Blobs(raw) {
     try {
       const decoded   = atob(blob.replace(/[^A-Za-z0-9+\/=]/g, ''));
       const printable = decoded.replace(/[^\x09\x0A\x0D\x20-\x7E]/g, '');
-      const isPrintableEnough = decoded.length >= 8 && (printable.length / decoded.length) > 0.75;
-
-      if (isPrintableEnough) {
+      if (decoded.length >= 8 && (printable.length / decoded.length) > 0.75) {
         results.push({ decoded, srcIndex: match.index, blob });
       }
-    } catch {
-      // Blob no es Base64 válido; se ignora silenciosamente
-    }
+    } catch { /* blob no es Base64 válido */ }
   }
 
   return results;
 }
 
 
-/* ─── 3. MOTOR DE ANÁLISIS ──────────────────────────────────────────────── */
+/* ─── 4. DETECCIÓN DE CONTEXTO DE CÓDIGO ───────────────────────────────── */
 
 /**
- * Ejecuta todos los patrones sobre el texto en sus tres variantes:
- * original, normalizado y decodificado desde Base64.
+ * Devuelve un array de rangos [start, end] donde el texto
+ * es código (bloques ```, inline `, <code>, <pre>).
+ * Se usa para reducir falsos positivos: patrones en código son
+ * más probablemente legítimos.
+ */
+function buildCodeRanges(text) {
+  const ranges = [];
+  let m;
+
+  // Bloques de triple backtick (con o sin lenguaje)
+  const fenceRe = /```[\s\S]*?```/g;
+  while ((m = fenceRe.exec(text)) !== null) {
+    ranges.push([m.index, m.index + m[0].length]);
+  }
+
+  // Código inline `...`
+  const inlineRe = /`[^`\n]{1,200}`/g;
+  while ((m = inlineRe.exec(text)) !== null) {
+    ranges.push([m.index, m.index + m[0].length]);
+  }
+
+  // HTML <code>...</code> y <pre>...</pre>
+  const htmlCodeRe = /<(?:code|pre)[^>]*>[\s\S]*?<\/(?:code|pre)>/gi;
+  while ((m = htmlCodeRe.exec(text)) !== null) {
+    ranges.push([m.index, m.index + m[0].length]);
+  }
+
+  return ranges;
+}
+
+function isInCodeBlock(index, codeRanges) {
+  return codeRanges.some(([start, end]) => index >= start && index < end);
+}
+
+/**
+ * Calcula el nivel de confianza de una coincidencia.
  *
- * @param {string} text  Texto a analizar.
- * @returns {Array<{category:string, severity:string, icon:string, matches:Array}>}
+ * Lógica:
+ *   fpRisk 'none'   → siempre 'confirmed'
+ *   fpRisk 'low'    → 'confirmed' (o 'likely' si en bloque de código)
+ *   fpRisk 'medium' → 'likely'    (o 'possible' si en bloque de código)
+ *   fpRisk 'high'   → 'possible' siempre
+ *
+ * @returns {'confirmed'|'likely'|'possible'}
+ */
+function computeConfidence(matchIndex, rule, codeRanges) {
+  const inCode = isInCodeBlock(matchIndex, codeRanges);
+  const risk   = rule.fpRisk ?? 'low';
+
+  if (risk === 'none')   return 'confirmed';
+  if (risk === 'low')    return inCode ? 'likely'   : 'confirmed';
+  if (risk === 'medium') return inCode ? 'possible' : 'likely';
+  /* 'high' */           return 'possible';
+}
+
+
+/* ─── 5. MOTOR DE ANÁLISIS ──────────────────────────────────────────────── */
+
+/**
+ * Ejecuta todos los patrones sobre el texto en tres variantes:
+ * original, normalizado y decodificado desde Base64.
+ * Cada coincidencia lleva un campo `confidence`.
  */
 function runPatterns(text) {
   const { text: normalizedText } = buildNormalizedView(text);
   const base64Blobs              = decodeBase64Blobs(text);
+  const codeRanges               = buildCodeRanges(text);
   const findings                 = [];
 
   for (const pattern of PATTERNS) {
     const matches = [];
 
     for (const rule of pattern.rules) {
-      // Devuelve una nueva instancia del regex con los flags indicados
-      // (siempre se fuerza 'g' para poder iterar con exec())
-      const createRegex = extraFlags =>
-        new RegExp(rule.regex.source, rule.regex.flags.replace(/g/g, '') + extraFlags);
+      const makeRegex = extra =>
+        new RegExp(rule.regex.source, rule.regex.flags.replace(/g/g, '') + extra);
 
       let m;
 
       // 1. Texto original
-      const reOriginal = createRegex('g');
-      while ((m = reOriginal.exec(text)) !== null) {
+      const reOrig = makeRegex('g');
+      while ((m = reOrig.exec(text)) !== null) {
         matches.push({
-          rule:      rule.name,
-          severity:  pattern.severity,
-          transform: 'original',
-          text:      m[0],
-          index:     m.index,
+          rule:       rule.name,
+          severity:   pattern.severity,
+          transform:  'original',
+          text:       m[0],
+          index:      m.index,
+          confidence: computeConfidence(m.index, rule, codeRanges),
         });
       }
 
-      // 2. Texto normalizado (solo si difiere, para evitar duplicados)
+      // 2. Texto normalizado — solo para detectar ofuscación con homóglifos/invisibles.
+      // Si el texto difiere por UN solo carácter invisible no relacionado con el match,
+      // las regex de texto plano matchearían dos veces (duplicado). Para evitarlo,
+      // omitimos cualquier coincidencia normalizada cuya cadena YA fue capturada
+      // en el pase original (mismo texto en minúsculas → es el mismo patrón sin ofuscación).
       if (normalizedText !== text) {
-        const reNormalized = createRegex('g');
-        while ((m = reNormalized.exec(normalizedText)) !== null) {
+        const alreadyCaught = new Set(
+          matches
+            .filter(em => em.rule === rule.name && em.transform === 'original')
+            .map(em => em.text.toLowerCase())
+        );
+
+        const reNorm = makeRegex('g');
+        while ((m = reNorm.exec(normalizedText)) !== null) {
+          if (alreadyCaught.has(m[0].toLowerCase())) continue;  // duplicado: omitir
+
           matches.push({
-            rule:      rule.name,
-            severity:  pattern.severity,
-            transform: 'normalizado',
-            text:      m[0],
-            index:     m.index,
+            rule:       rule.name,
+            severity:   pattern.severity,
+            transform:  'normalizado',
+            text:       m[0],
+            index:      m.index,
+            confidence: rule.fpRisk === 'none' ? 'confirmed' :
+                        rule.fpRisk === 'low'  ? 'confirmed' : 'likely',
           });
         }
       }
 
       // 3. Contenido decodificado desde Base64
       for (const blob of base64Blobs) {
-        const reBase64 = createRegex('g');
-        while ((m = reBase64.exec(blob.decoded)) !== null) {
+        const reB64 = makeRegex('g');
+        while ((m = reB64.exec(blob.decoded)) !== null) {
           matches.push({
-            rule:      rule.name,
-            severity:  pattern.severity,
-            transform: 'base64',
-            text:      m[0],
-            index:     blob.srcIndex,
-            decoded:   blob.decoded.slice(0, 200),
+            rule:       rule.name,
+            severity:   pattern.severity,
+            transform:  'base64',
+            text:       m[0],
+            index:      blob.srcIndex,
+            decoded:    blob.decoded.slice(0, 200),
+            confidence: 'confirmed', // Base64 con inyección es casi siempre real
           });
         }
       }
@@ -1194,51 +1157,51 @@ function runPatterns(text) {
   return findings;
 }
 
+
+/* ─── 6. PUNTUACIÓN ─────────────────────────────────────────────────────── */
+
 /**
- * Calcula la puntuación de riesgo (0–100) combinando cantidad y gravedad
- * de todas las coincidencias encontradas.
- *
- * @param {ReturnType<typeof runPatterns>} findings
- * @returns {number}
+ * Calcula la puntuación de riesgo (0–100).
+ * Combina severidad × cantidad de coincidencias × multiplicador de confianza.
  */
 function calcScore(findings) {
   const total = findings.reduce((sum, finding) => {
-    const weight     = SEVERITY_WEIGHT[finding.severity] ?? 2;
-    const matchCount = Math.min(finding.matches.length, MAX_MATCHES_FOR_SCORE);
-    return sum + matchCount * weight;
+    const weight = SEVERITY_WEIGHT[finding.severity] ?? 2;
+    let catScore = 0;
+
+    for (const conf of ['confirmed', 'likely', 'possible']) {
+      const count = Math.min(
+        finding.matches.filter(m => m.confidence === conf).length,
+        MAX_MATCHES_SCORE
+      );
+      catScore += count * weight * CONFIDENCE_MULT[conf];
+    }
+
+    return sum + catScore;
   }, 0);
 
-  return Math.min(100, total);
+  return Math.min(100, Math.round(total));
 }
 
 
-/* ─── 4. EXTRACCIÓN DE TEXTO ────────────────────────────────────────────── */
+/* ─── 7. EXTRACCIÓN DE TEXTO ────────────────────────────────────────────── */
 
-/**
- * Extrae el contenido textual de un archivo.
- * Soporta PDF (pdf.js), DOCX (mammoth) y texto plano/HTML.
- *
- * @param {File} file
- * @returns {Promise<string>}
- */
 async function extractText(file) {
-  const extension = file.name.split('.').pop().toLowerCase();
+  const ext = file.name.split('.').pop().toLowerCase();
 
-  if (extension === 'pdf') {
+  if (ext === 'pdf') {
     const buffer = await file.arrayBuffer();
     const pdf    = await pdfjsLib.getDocument({ data: buffer }).promise;
     const pages  = [];
-
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page        = await pdf.getPage(pageNum);
-      const textContent = await page.getTextContent();
-      pages.push(textContent.items.map(item => item.str).join(' '));
+    for (let n = 1; n <= pdf.numPages; n++) {
+      const page    = await pdf.getPage(n);
+      const content = await page.getTextContent();
+      pages.push(content.items.map(i => i.str).join(' '));
     }
-
     return pages.join('\n');
   }
 
-  if (extension === 'docx') {
+  if (ext === 'docx') {
     const buffer = await file.arrayBuffer();
     const result = await mammoth.extractRawText({ arrayBuffer: buffer });
     return result.value;
@@ -1248,23 +1211,16 @@ async function extractText(file) {
 }
 
 
-/* ─── 5. RENDERIZADO ────────────────────────────────────────────────────── */
+/* ─── 8. RENDERIZADO ────────────────────────────────────────────────────── */
 
-/** Estado del último análisis completado (necesario para exportar / copiar) */
 let lastReport = null;
 
-/**
- * Oculta el formulario de entrada y muestra el spinner de carga.
- */
 function showLoading() {
   document.getElementById('inputArea').style.display = 'none';
   document.getElementById('loading').style.display   = 'block';
   document.getElementById('results').style.display   = 'none';
 }
 
-/**
- * Devuelve la interfaz al estado inicial para un nuevo análisis.
- */
 function resetUI() {
   document.getElementById('inputArea').style.display = 'block';
   document.getElementById('loading').style.display   = 'none';
@@ -1275,23 +1231,13 @@ function resetUI() {
   lastReport = null;
 }
 
-/**
- * Alterna la visibilidad del listado de coincidencias de una categoría.
- * Llamado desde los onclick generados dinámicamente en renderCategoryCard().
- *
- * @param {number} index  Índice de la categoría en el array de findings.
- */
 function toggleCategory(index) {
   document.getElementById(`ml-${index}`).classList.toggle('open');
   document.getElementById(`chev-${index}`).classList.toggle('open');
 }
 
 /**
- * Genera el HTML de una coincidencia individual.
- *
- * @param {{ rule:string, severity:string, transform:string,
- *           text:string, index:number, decoded?:string }} match
- * @returns {string}
+ * Genera el HTML de una coincidencia individual con badge de confianza.
  */
 function renderMatchItem(match) {
   const highlightClass = match.severity !== 'high' ? match.severity : '';
@@ -1299,10 +1245,18 @@ function renderMatchItem(match) {
     ? `<div class="decoded">↳ Decoded: ${escapeHtml(match.decoded)}</div>`
     : '';
 
+  const confLabels = {
+    confirmed: '✓ Confirmado',
+    likely:    '⚠ Probable',
+    possible:  '? Posible FP',
+  };
+  const confBadge = `<span class="confidence-tag conf-${match.confidence}">${confLabels[match.confidence]}</span>`;
+
   return `
-    <div class="match-item">
+    <div class="match-item confidence-${match.confidence}">
       <div class="match-meta">
         <span class="transform-tag ${match.transform}">${match.transform}</span>
+        ${confBadge}
         <span class="match-rule">${escapeHtml(match.rule)}</span>
       </div>
       <div class="match-text">
@@ -1314,22 +1268,26 @@ function renderMatchItem(match) {
 }
 
 /**
- * Genera el HTML de una tarjeta de categoría con sus coincidencias.
- *
- * @param {{ category:string, severity:string, icon:string, matches:any[] }} finding
- * @param {number} index  Índice para construir IDs únicos del DOM.
- * @returns {string}
+ * Genera el HTML de una tarjeta de categoría con mini-badges de confianza.
  */
 function renderCategoryCard(finding, index) {
+  const confirmedN = finding.matches.filter(m => m.confidence === 'confirmed').length;
+  const likelyN    = finding.matches.filter(m => m.confidence === 'likely').length;
+  const possibleN  = finding.matches.filter(m => m.confidence === 'possible').length;
+
+  const miniConf = [
+    confirmedN > 0 ? `<span class="conf-dot confirmed">✓${confirmedN}</span>` : '',
+    likelyN    > 0 ? `<span class="conf-dot likely">⚠${likelyN}</span>`    : '',
+    possibleN  > 0 ? `<span class="conf-dot possible">?${possibleN}</span>` : '',
+  ].join('');
+
   const matchItems = finding.matches
-    .slice(0, MAX_MATCHES_RENDERED)
-    .map(match => renderMatchItem(match))
+    .slice(0, MAX_MATCHES_RENDER)
+    .map(m => renderMatchItem(m))
     .join('');
 
-  const overflowNote = finding.matches.length > MAX_MATCHES_RENDERED
-    ? `<p class="hint" style="padding: 8px 14px">
-         … y ${finding.matches.length - MAX_MATCHES_RENDERED} más
-       </p>`
+  const overflowNote = finding.matches.length > MAX_MATCHES_RENDER
+    ? `<p class="hint" style="padding:8px 14px">… y ${finding.matches.length - MAX_MATCHES_RENDER} más</p>`
     : '';
 
   return `
@@ -1337,6 +1295,7 @@ function renderCategoryCard(finding, index) {
       <div class="category-header" onclick="toggleCategory(${index})">
         <span class="category-icon">${finding.icon}</span>
         <span class="category-name">${escapeHtml(finding.category)}</span>
+        <div class="mini-conf">${miniConf}</div>
         <span class="category-count">${finding.matches.length}</span>
         <span class="chevron" id="chev-${index}">▼</span>
       </div>
@@ -1349,10 +1308,6 @@ function renderCategoryCard(finding, index) {
 
 /**
  * Construye y muestra el panel de resultados completo.
- *
- * @param {ReturnType<typeof runPatterns>} findings  Hallazgos del análisis.
- * @param {string} title    Nombre del archivo o URL analizada.
- * @param {string} rawText  Texto extraído completo.
  */
 function renderResults(findings, title, rawText) {
   const score     = calcScore(findings);
@@ -1364,75 +1319,81 @@ function renderResults(findings, title, rawText) {
     high:   'Riesgo alto detectado',
   };
 
-  // Encabezado: puntuación y nivel de riesgo
   document.getElementById('riskScore').textContent   = score;
   document.getElementById('riskBadge').className     = `risk-badge ${riskLevel}`;
   document.getElementById('resultTitle').textContent = RISK_LABELS[riskLevel];
   document.getElementById('fileInfo').textContent    = title;
 
-  // Estadísticas rápidas
-  const totalMatches = findings.reduce((sum, f) => sum + f.matches.length, 0);
-  const highMatches  = findings
-    .filter(f => f.severity === 'high')
-    .reduce((sum, f) => sum + f.matches.length, 0);
+  const totalMatches = findings.reduce((s, f) => s + f.matches.length, 0);
+  const confirmedN   = findings.reduce((s, f) => s + f.matches.filter(m => m.confidence === 'confirmed').length, 0);
+  const likelyN      = findings.reduce((s, f) => s + f.matches.filter(m => m.confidence === 'likely').length, 0);
+  const possibleN    = findings.reduce((s, f) => s + f.matches.filter(m => m.confidence === 'possible').length, 0);
+  const highMatches  = findings.filter(f => f.severity === 'high').reduce((s, f) => s + f.matches.length, 0);
 
   document.getElementById('statsRow').innerHTML =
     `<span class="stat"><strong>${findings.length}</strong> categorías</span>` +
     `<span class="stat"><strong>${totalMatches}</strong> coincidencias</span>` +
-    `<span class="stat"><strong>${rawText.length.toLocaleString()}</strong> chars</span>` +
-    (highMatches
-      ? `<span class="stat" style="color: var(--danger)">
-           <strong>${highMatches}</strong> alta gravedad
-         </span>`
-      : '');
+    (confirmedN > 0 ? `<span class="stat" style="color:var(--safe)"><strong>✓${confirmedN}</strong> confirmadas</span>` : '') +
+    (likelyN    > 0 ? `<span class="stat" style="color:var(--warning)"><strong>⚠${likelyN}</strong> probables</span>` : '') +
+    (possibleN  > 0 ? `<span class="stat" style="color:var(--text3)"><strong>?${possibleN}</strong> posibles FP</span>` : '') +
+    `<span class="stat"><strong>${rawText.length.toLocaleString()}</strong> chars</span>`;
 
-  // Hallazgos o mensaje de "sin detecciones"
+  // Renderizar hallazgos
   document.getElementById('findingsList').innerHTML = findings.length === 0
     ? `<div class="no-findings">
          <div class="icon">✅</div>
          <h3>Sin detecciones</h3>
          <p>No se encontraron patrones de inyección conocidos.</p>
        </div>`
-    : findings.map((finding, i) => renderCategoryCard(finding, i)).join('');
+    : findings.map((f, i) => renderCategoryCard(f, i)).join('');
 
-  // Previsualización del texto extraído (máx. 3000 caracteres)
+  // Configurar filtro de FP
+  const fpFilterEl = document.getElementById('fpFilter');
+  const fpCountEl  = document.getElementById('fpCount');
+  if (possibleN > 0) {
+    fpFilterEl.style.display = 'flex';
+    fpCountEl.textContent    = `${possibleN} posible${possibleN !== 1 ? 's' : ''} FP`;
+    // Aplicar estado inicial del toggle (ocultar por defecto)
+    const hideFP = document.getElementById('hideFP');
+    hideFP.checked = true;
+    document.querySelectorAll('.match-item.confidence-possible').forEach(el => {
+      el.classList.add('fp-hidden');
+    });
+  } else {
+    fpFilterEl.style.display = 'none';
+  }
+
+  // Previsualización del texto (máx 3000 chars)
   const PREVIEW_LIMIT = 3000;
   document.getElementById('previewBox').textContent =
     rawText.slice(0, PREVIEW_LIMIT) +
     (rawText.length > PREVIEW_LIMIT ? '\n\n[… truncado …]' : '');
 
-  // Mostrar panel y guardar estado para exportación
   document.getElementById('loading').style.display = 'none';
   document.getElementById('results').style.display = 'block';
 
-  lastReport = {
-    title,
-    score,
-    findings,
-    rawText: rawText.slice(0, 5000),
-  };
+  lastReport = { title, score, findings, rawText: rawText.slice(0, 5000) };
 }
 
 
-/* ─── 6. EXPORTACIÓN ────────────────────────────────────────────────────── */
+/* ─── 9. EXPORTACIÓN ────────────────────────────────────────────────────── */
 
-/**
- * Copia un resumen legible del último análisis al portapapeles.
- *
- * @param {MouseEvent} event  Evento del clic (para actualizar el texto del botón).
- */
 function copyReport(event) {
   if (!lastReport) return;
 
   const lines = [
-    '=== Detector de Prompt Injection ===',
+    '=== Detector de Prompt Injection v2 ===',
     `Fuente: ${lastReport.title}`,
     `Riesgo: ${lastReport.score}/100`,
     '',
-    ...lastReport.findings.map(f =>
-      `[${f.severity.toUpperCase()}] ${f.category} (${f.matches.length})\n` +
-      f.matches.slice(0, 5).map(m => `  - [${m.transform}] ${m.text.slice(0, 120)}`).join('\n')
-    ),
+    ...lastReport.findings.map(f => {
+      const confBreakdown = ['confirmed','likely','possible']
+        .map(c => { const n = f.matches.filter(m => m.confidence === c).length; return n > 0 ? `${c}:${n}` : ''; })
+        .filter(Boolean).join(' ');
+      return `[${f.severity.toUpperCase()}] ${f.category} (${f.matches.length}) — ${confBreakdown}\n` +
+        f.matches.filter(m => m.confidence !== 'possible').slice(0, 5)
+          .map(m => `  - [${m.transform}] ${m.text.slice(0, 120)}`).join('\n');
+    }),
   ];
 
   navigator.clipboard.writeText(lines.join('\n')).then(() => {
@@ -1442,14 +1403,11 @@ function copyReport(event) {
   });
 }
 
-/**
- * Descarga el último análisis como archivo JSON.
- */
 function exportJSON() {
   if (!lastReport) return;
 
   const payload = {
-    version:  '1.0',
+    version:  '2.0',
     date:     new Date().toISOString(),
     source:   lastReport.title,
     score:    lastReport.score,
@@ -1464,17 +1422,12 @@ function exportJSON() {
 }
 
 
-/* ─── 7. ANÁLISIS — puntos de entrada ──────────────────────────────────── */
+/* ─── 10. ANÁLISIS — puntos de entrada ─────────────────────────────────── */
 
-/**
- * Procesa un archivo subido por el usuario.
- *
- * @param {File} file
- */
 async function analyzeFile(file) {
   showLoading();
   try {
-    const text = await extractText(file);
+    const text  = await extractText(file);
     const label = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
     renderResults(runPatterns(text), label, text);
   } catch (err) {
@@ -1483,14 +1436,9 @@ async function analyzeFile(file) {
   }
 }
 
-/**
- * Descarga y analiza una URL remota usando proxies CORS públicos con
- * reintentos automáticos en caso de fallo.
- */
 async function analyzeURL() {
   const url = document.getElementById('urlInput').value.trim();
   if (!url) { alert('Por favor ingresa una URL.'); return; }
-
   showLoading();
 
   const CORS_PROXIES = [
@@ -1499,17 +1447,11 @@ async function analyzeURL() {
   ];
 
   let text = null;
-
   for (const proxyUrl of CORS_PROXIES) {
     try {
-      const response = await fetch(proxyUrl, { signal: AbortSignal.timeout(10_000) });
-      if (response.ok) {
-        text = await response.text();
-        break;
-      }
-    } catch {
-      // Proxy no disponible; se continúa con el siguiente
-    }
+      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(10_000) });
+      if (res.ok) { text = await res.text(); break; }
+    } catch { /* continuar con el siguiente proxy */ }
   }
 
   if (!text) {
@@ -1521,9 +1463,6 @@ async function analyzeURL() {
   renderResults(runPatterns(text), url, text);
 }
 
-/**
- * Analiza el texto pegado directamente por el usuario.
- */
 function analyzePaste() {
   const text = document.getElementById('pasteInput').value;
   if (!text.trim()) { alert('Por favor ingresa texto para analizar.'); return; }
@@ -1532,7 +1471,7 @@ function analyzePaste() {
 }
 
 
-/* ─── 8. EVENTOS ────────────────────────────────────────────────────────── */
+/* ─── 11. EVENTOS ───────────────────────────────────────────────────────── */
 
 // Navegación por tabs
 document.querySelectorAll('.tab').forEach(tab => {
@@ -1544,7 +1483,7 @@ document.querySelectorAll('.tab').forEach(tab => {
   });
 });
 
-// Dropzone: clic, teclado, arrastrar y soltar
+// Dropzone
 const dropzoneEl  = document.getElementById('dropzone');
 const fileInputEl = document.getElementById('fileInput');
 
@@ -1552,40 +1491,47 @@ dropzoneEl.addEventListener('click',     ()  => fileInputEl.click());
 dropzoneEl.addEventListener('keydown',   e   => { if (e.key === 'Enter' || e.key === ' ') fileInputEl.click(); });
 dropzoneEl.addEventListener('dragover',  e   => { e.preventDefault(); dropzoneEl.classList.add('drag-over'); });
 dropzoneEl.addEventListener('dragleave', ()  => dropzoneEl.classList.remove('drag-over'));
-dropzoneEl.addEventListener('drop',      e   => {
+dropzoneEl.addEventListener('drop', e => {
   e.preventDefault();
   dropzoneEl.classList.remove('drag-over');
   if (e.dataTransfer.files[0]) analyzeFile(e.dataTransfer.files[0]);
 });
-
 fileInputEl.addEventListener('change', () => {
   if (fileInputEl.files[0]) analyzeFile(fileInputEl.files[0]);
 });
 
-// Botones del panel de URL y pegado
-document.getElementById('btnAnalyzeUrl').addEventListener('click',   analyzeURL);
-document.getElementById('btnAnalyzePaste').addEventListener('click',  analyzePaste);
-document.getElementById('btnClearPaste').addEventListener('click',    () => {
+// Botones de análisis
+document.getElementById('btnAnalyzeUrl').addEventListener('click',  analyzeURL);
+document.getElementById('btnAnalyzePaste').addEventListener('click', analyzePaste);
+document.getElementById('btnClearPaste').addEventListener('click',   () => {
   document.getElementById('pasteInput').value = '';
 });
 
-// Botones del panel de resultados
+// Botones de resultados
 document.getElementById('btnNewAnalysis').addEventListener('click', resetUI);
 document.getElementById('btnCopyReport').addEventListener('click',  copyReport);
 document.getElementById('btnExportJson').addEventListener('click',  exportJSON);
 
-// Alternador de tema claro / oscuro
+// Filtro de falsos positivos
+document.getElementById('hideFP').addEventListener('change', function () {
+  document.querySelectorAll('.match-item.confidence-possible').forEach(el => {
+    el.classList.toggle('fp-hidden', this.checked);
+  });
+});
+
+// Tema claro / oscuro
 document.getElementById('themeToggle').addEventListener('click', () => {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
   document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
 });
 
-// Configuración del worker de PDF.js (debe cargarse después del script principal)
+// PDF.js worker
 if (typeof pdfjsLib !== 'undefined') {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
+
 </script>
 </body>
 </html>
