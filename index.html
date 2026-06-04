@@ -549,7 +549,7 @@
 "use strict";
 
 /* =============================================================================
-   DETECTOR DE PROMPT INJECTION  v2.0
+   DETECTOR DE PROMPT INJECTION  v2.1
    ─────────────────────────────────────────────────────────────────────────────
    1. CONSTANTES       — umbrales, pesos y límites
    2. PATRONES         — 15 categorías con anotación de fpRisk
@@ -593,6 +593,7 @@ const RISK_TYPE_MAP = {
   'Ofuscación avanzada':                    'Hidden Content',
   'Inyección en otros idiomas':             'Instruction Override',
   'Indicadores semánticos de control':      'Instruction Override',
+  'Contenido codificado sospechoso':        'Hidden Content',
 };
 
 /**
@@ -1497,7 +1498,7 @@ function copyReport(event) {
   if (!lastReport) return;
 
   const lines = [
-    '=== Detector de Prompt Injection v2 ===',
+    '=== Detector de Prompt Injection v2.1 ===',
     `Fuente: ${lastReport.title}`,
     `Riesgo: ${lastReport.score}/100`,
     '',

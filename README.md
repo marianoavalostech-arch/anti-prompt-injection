@@ -25,17 +25,24 @@ Herramienta web para detectar ataques de **prompt injection** en documentos y te
 | Inyección indirecta u oculta (caracteres invisibles, CSS) | 🔴 Alta |
 | Exfiltración de datos | 🔴 Alta |
 | Desbloqueo de contenido dañino | 🔴 Alta |
+| Jailbreaks conocidos (DAN, GODMODE, evil confidant…) | 🔴 Alta |
+| Inyección estructurada (JSON/YAML/XML) | 🔴 Alta |
+| Ofuscación avanzada (leetspeak, ROT13, texto invertido) | 🔴 Alta |
+| Inyección en otros idiomas (FR, DE, PT, IT, ZH) | 🔴 Alta |
+| Indicadores semánticos de control | 🔴 Alta |
 | Inyección de código / plantilla | 🟡 Media |
-| Contenido codificado en Base64 sospechoso | 🟡 Media |
+| Contenido codificado sospechoso | 🟡 Media |
 | Escape de contexto | 🟡 Media |
+| Manipulación de conversación | 🟡 Media |
 | Ingeniería social | 🟢 Baja |
 
 ## Características
 
-- Analiza **PDF, DOCX, TXT, MD, HTML** y texto pegado
+- Analiza **PDF, DOCX, TXT, MD, HTML, JSON, CSV, XML, YAML** y texto pegado
 - Soporte para **URLs** via proxy CORS con reintentos automáticos
-- Detecta ofuscación: homóglifos, caracteres de ancho cero, unicode invisible, Base64
+- Detecta ofuscación: homóglifos, caracteres de ancho cero, unicode invisible, Base64, URL-encoding, entidades HTML numéricas
 - Normaliza el texto antes de escanear para no perder variantes ofuscadas
+- Sistema de **confianza por coincidencia** (Confirmado / Probable / Posible FP) con filtro ocultable
 - Puntuación de riesgo 0–100 con nivel (sin riesgo / medio / alto)
 - Exporta el informe en **JSON**
 - Tema claro / oscuro
@@ -68,12 +75,15 @@ python3 -m http.server 8080
 ## Cómo funciona
 
 1. **Extracción** — lee el contenido según el tipo de archivo (PDF.js para PDFs, Mammoth para DOCX, DOMParser para HTML).
-2. **Tres vistas de escaneo:**
+2. **Cinco vistas de escaneo:**
    - *Original* — texto tal cual.
    - *Normalizado* — elimina caracteres invisibles, reemplaza homóglifos cirílicos/griegos, colapsa espaciado de ofuscación.
    - *Base64* — decodifica blobs Base64 y los escanea por separado.
-3. **Motor de patrones** — aplica ~50 reglas regex organizadas por categoría y severidad.
-4. **Puntuación** — combina cantidad de coincidencias, severidad y presencia de ofuscación (máx. 100).
+   - *URL-encoded* — decodifica secuencias `%xx` y las analiza.
+   - *HTML entities* — decodifica entidades numéricas (`&#xxx;`) y las analiza.
+3. **Motor de patrones** — aplica ~82 reglas regex organizadas en 17 categorías por severidad.
+4. **Sistema de confianza** — cada coincidencia recibe nivel `confirmed`, `likely` o `possible` según el riesgo de falso positivo de la regla y si la coincidencia cae dentro de un bloque de código o contexto educativo.
+5. **Puntuación** — combina cantidad de coincidencias, severidad y nivel de confianza (máx. 100).
 
 ## Tecnologías
 
