@@ -2154,42 +2154,51 @@ async function analyzeURL() {
   const loadingMsg = document.getElementById('loadingMsg');
 
   const enc = encodeURIComponent(url);
+  // Orden: los dos primeros son los más confiables históricamente.
+  // allorigins /raw devuelve HTML crudo; /get devuelve JSON {contents:"..."} como fallback.
   const CORS_PROXIES = [
-    // /get siempre devuelve JSON con campo "contents"; más predecible que /raw
-    { label: 'proxy 1/4', url: `https://api.allorigins.win/get?url=${enc}` },
-    { label: 'proxy 2/4', url: `https://corsproxy.io/?url=${enc}` },
-    { label: 'proxy 3/4', url: `https://api.codetabs.com/v1/proxy?quest=${enc}` },
-    { label: 'proxy 4/4', url: `https://thingproxy.freeboard.io/fetch/${url}` },
+    { label: '1/5', url: `https://api.allorigins.win/raw?url=${enc}` },
+    { label: '2/5', url: `https://corsproxy.io/?${enc}` },
+    { label: '3/5', url: `https://api.allorigins.win/get?url=${enc}` },
+    { label: '4/5', url: `https://api.codetabs.com/v1/proxy?quest=${enc}` },
+    { label: '5/5', url: `https://thingproxy.freeboard.io/fetch/${url}` },
   ];
 
   let raw = null;
+  const proxyErrors = [];
+
   for (const proxy of CORS_PROXIES) {
-    loadingMsg.textContent = `Descargando página (${proxy.label})…`;
+    loadingMsg.textContent = `Descargando página (proxy ${proxy.label})…`;
     try {
       const res = await fetch(proxy.url, { signal: AbortSignal.timeout(12_000) });
-      if (!res.ok) continue;
+      if (!res.ok) { proxyErrors.push(`proxy ${proxy.label}: HTTP ${res.status}`); continue; }
       const body = await res.text();
-      // Algunos proxies devuelven JSON envuelto {contents: "..."}
+      if (!body || body.trim().length === 0) { proxyErrors.push(`proxy ${proxy.label}: respuesta vacía`); continue; }
+
+      // Algunos proxies envuelven la respuesta en JSON {contents: "..."}
       if (body.trimStart().startsWith('{')) {
         try {
-          const parsed = JSON.parse(body);
-          // contents vacío = el proxy no pudo obtener el sitio; probar siguiente
-          const c = parsed.contents;
-          raw = (c && c.trim().length > 0) ? c : null;
+          const c = JSON.parse(body).contents;
+          raw = (c && c.trim().length > 0) ? c : body;
         } catch { raw = body; }
       } else {
         raw = body;
       }
       if (raw && raw.trim().length > 0) break;
-    } catch { /* probar siguiente */ }
+      proxyErrors.push(`proxy ${proxy.label}: contenido vacío tras parseo`);
+      raw = null;
+    } catch(e) {
+      proxyErrors.push(`proxy ${proxy.label}: ${e.name}`);
+    }
   }
 
   loadingMsg.textContent = 'Extrayendo y analizando texto...';
 
   if (!raw || raw.trim().length === 0) {
     resetUI();
+    const detail = proxyErrors.length ? '\n\nDetalle:\n' + proxyErrors.map(e => '• ' + e).join('\n') : '';
     alert(
-      'No se pudo obtener la URL con ningún proxy.\n\n' +
+      'No se pudo obtener la URL con ningún proxy.' + detail + '\n\n' +
       'Posibles causas:\n' +
       '• La página requiere login o está detrás de un firewall\n' +
       '• El sitio bloquea proxies públicos\n' +
