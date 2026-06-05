@@ -1038,6 +1038,56 @@ function escapeHtml(value) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/**
+ * Construye el HTML de la previsualización resaltando los spans detectados
+ * en el texto original (transform === 'original').
+ */
+function buildHighlightedPreview(text, findings) {
+  const spans = [];
+  for (const finding of findings) {
+    for (const match of finding.matches) {
+      if (match.transform !== 'original') continue;
+      const start = match.index;
+      const end   = start + match.text.length;
+      if (start >= text.length) continue;
+      spans.push({ start, end: Math.min(end, text.length), severity: finding.severity, confidence: match.confidence });
+    }
+  }
+
+  if (spans.length === 0) return escapeHtml(text);
+
+  // Ordenar por inicio; en empate, el span más largo primero
+  spans.sort((a, b) => a.start - b.start || b.end - a.end);
+
+  // Fusionar solapamientos, conservando la mayor severidad/confianza
+  const merged = [];
+  for (const span of spans) {
+    if (!merged.length || span.start >= merged[merged.length - 1].end) {
+      merged.push({ ...span });
+    } else {
+      const last = merged[merged.length - 1];
+      last.end = Math.max(last.end, span.end);
+      if (span.confidence === 'confirmed') last.confidence = 'confirmed';
+      else if (span.confidence === 'likely' && last.confidence === 'possible') last.confidence = 'likely';
+      if (span.severity === 'high') last.severity = 'high';
+      else if (span.severity === 'medium' && last.severity === 'low') last.severity = 'medium';
+    }
+  }
+
+  // Construir HTML intercalando partes normales y resaltadas
+  let html = '';
+  let cursor = 0;
+  for (const { start, end, severity, confidence } of merged) {
+    if (start > cursor) html += escapeHtml(text.slice(cursor, start));
+    const sevClass = severity !== 'high' ? severity : '';
+    const confLabel = { confirmed: '✓ Confirmado', likely: '⚠ Probable', possible: '? Posible FP' }[confidence] || confidence;
+    html += `<span class="highlight ${sevClass}" title="${confLabel}">${escapeHtml(text.slice(start, end))}</span>`;
+    cursor = end;
+  }
+  if (cursor < text.length) html += escapeHtml(text.slice(cursor));
+  return html;
+}
+
 function getRiskLevel(score) {
   if (score < RISK_THRESHOLDS.safe)   return 'safe';
   if (score < RISK_THRESHOLDS.medium) return 'medium';
@@ -1510,7 +1560,7 @@ function renderResults(findings, title, rawText) {
   const riskLevel = getRiskLevel(score);
 
   const RISK_LABELS = {
-    safe:   'Sin amenazas detectadas',
+    safe:   findings.length === 0 ? 'Sin amenazas detectadas' : 'Riesgo bajo detectado',
     medium: 'Riesgo moderado detectado',
     high:   'Riesgo alto detectado',
   };
@@ -1559,10 +1609,11 @@ function renderResults(findings, title, rawText) {
     fpFilterEl.style.display = 'none';
   }
 
-  // Previsualización del texto (máx 3000 chars)
+  // Previsualización del texto (máx 3000 chars) con amenazas resaltadas
   const PREVIEW_LIMIT = 3000;
-  document.getElementById('previewBox').textContent =
-    rawText.slice(0, PREVIEW_LIMIT) +
+  const previewText = rawText.slice(0, PREVIEW_LIMIT);
+  document.getElementById('previewBox').innerHTML =
+    buildHighlightedPreview(previewText, findings) +
     (rawText.length > PREVIEW_LIMIT ? '\n\n[… truncado …]' : '');
 
   document.getElementById('loading').style.display = 'none';
