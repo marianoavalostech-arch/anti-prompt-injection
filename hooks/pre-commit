@@ -1,0 +1,30 @@
+#!/bin/sh
+# Pre-commit hook: sincroniza EXAMPLE_DB en index.html desde el CSV.
+# Se ejecuta automáticamente antes de cada `git commit`.
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+BUILD="$REPO_ROOT/build.py"
+CSV="$REPO_ROOT/prompt_injection_ejemplos.csv"
+HTML="$REPO_ROOT/index.html"
+
+# Detectar el comando Python disponible (python3 en Linux/Mac, python en Windows)
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON=python3
+elif command -v python >/dev/null 2>&1; then
+  PYTHON=python
+else
+  echo "[build] ERROR: Python no encontrado. Instalalo y volvé a intentar."
+  exit 1
+fi
+
+# Solo correr si el CSV está en el staging area
+if git diff --cached --name-only | grep -q "prompt_injection_ejemplos\.csv"; then
+  echo "[build] Sincronizando EXAMPLE_DB…"
+  "$PYTHON" "$BUILD"
+  if [ $? -ne 0 ]; then
+    echo "[build] ERROR: build.py falló. Commit cancelado."
+    exit 1
+  fi
+  git add "$HTML"
+  echo "[build] index.html actualizado y agregado al commit."
+fi
