@@ -411,7 +411,7 @@
     <p>Analiza documentos PDF, Word, texto, HTML o URLs en busca de instrucciones maliciosas</p>
   </div>
   <div class="header-right">
-    <span class="v-badge">v2.3</span>
+    <span class="v-badge">v2.4</span>
     <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema">🌙</button>
   </div>
 </header>
@@ -466,7 +466,7 @@
   <!-- ── Carga ─────────────────────────────────────────────────────────── -->
   <div id="loading">
     <div class="spinner"></div>
-    <p style="color: var(--text2); font-size: 0.88rem;">Extrayendo y analizando texto...</p>
+    <p id="loadingMsg" style="color: var(--text2); font-size: 0.88rem;">Extrayendo y analizando texto...</p>
   </div>
 
   <!-- ── Resultados ───────────────────────────────────────────────────── -->
@@ -541,7 +541,7 @@
 </main>
 
 <footer>
-  Análisis local · Sin envío de datos (excepto proxy URL) · <span id="catCount"></span> patrones · v2.3
+  Análisis local · Sin envío de datos (excepto proxy URL) · <span id="catCount"></span> patrones · v2.4
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -551,7 +551,7 @@
 "use strict";
 
 /* =============================================================================
-   DETECTOR DE PROMPT INJECTION  v2.3
+   DETECTOR DE PROMPT INJECTION  v2.4
    ─────────────────────────────────────────────────────────────────────────────
    1. CONSTANTES       — umbrales, pesos y límites
    2. PATRONES         — 15 categorías con anotación de fpRisk
@@ -752,7 +752,17 @@ const PATTERNS = [
       { name: 'Etiquetas Unicode invisibles (tag chars)', fpRisk: 'none',
         regex: /[\u{E0000}-\u{E007F}]/gu },
       { name: 'Texto oculto por CSS', fpRisk: 'low',
-        regex: /(?:color\s*:\s*(?:#(?:fff{1,3}|ffffff)|white)|color\s*:\s*rgba?\([^)]*,\s*0\s*\)|opacity\s*:\s*0(?:\.0+)?|font-size\s*:\s*0|display\s*:\s*none|visibility\s*:\s*hidden)/gi },
+        regex: /(?:color\s*:\s*(?:#(?:fff{1,3}|ffffff)|white)|color\s*:\s*rgba?\([^)]*,\s*0\s*\)|opacity\s*:\s*0(?:\.0+)?|font-size\s*:\s*0|display\s*:\s*none|visibility\s*:\s*hidden)/gi,
+        // opacity:0 en <img> es lazy-loading estándar (Next.js, etc.) — no es sospechoso.
+        // Solo lo marcamos si el tag contenedor NO es <img>.
+        postFilter: (matchText, fullText, matchIndex) => {
+          if (!/opacity\s*:\s*0/i.test(matchText)) return true;
+          const before = fullText.slice(Math.max(0, matchIndex - 400), matchIndex);
+          const lastOpen = before.lastIndexOf('<');
+          if (lastOpen === -1) return true;
+          return !/^<img\b/i.test(before.slice(lastOpen));
+        },
+      },
       { name: 'Elemento fuera de pantalla (CSS)', fpRisk: 'low',
         regex: /(?:position\s*:\s*(?:absolute|fixed)[^;}"'<]{0,80}(?:left|top)\s*:\s*-\d{3,}px|transform\s*:\s*scale\s*\(\s*0(?:\.0+)?\s*\))/gi },
       { name: 'Instrucción en comentario HTML', fpRisk: 'low',
@@ -824,13 +834,17 @@ const PATTERNS = [
       { name: 'Template injection', fpRisk: 'high',
         regex: /\{\{[^}]{2,100}\}\}|\$\{[^}]{2,100}\}|#\{[^}]{2,100}\}|<%[^%]{2,100}%>/g },
       { name: 'Etiquetas <script> en contenido', fpRisk: 'medium',
-        regex: /<script[\s>][\s\S]*?<\/script>/gi },
+        // Excluye: scripts con src= (externos) y type="application/json" (datos de framework)
+        // Solo marca scripts con código inline real
+        regex: /<script\b(?![^>]*\bsrc\s*=)(?![^>]*\btype\s*=\s*["']application\/json["'])[^>]*>\s*\S[\s\S]*?<\/script>/gi },
       { name: 'Event handlers inyectados', fpRisk: 'high',
         regex: /\bon(?:load|error|click|mouseover|focus|blur|submit|change)\s*=\s*["'][^"']{5,}/gi },
       { name: 'eval / exec en prompt', fpRisk: 'high',
         regex: /(?:eval|exec|execute|run_code|subprocess|shell_exec|os\.system|child_process)\s*\(\s*["'`][^"'`]{4,}/gi },
       { name: 'URL javascript: / data:', fpRisk: 'medium',
-        regex: /(?:javascript|data)\s*:\s*[^\s"']{6,}/gi },
+        // data:image/ es siempre un placeholder o recurso gráfico — inofensivo.
+        // Solo son peligrosos: data:text/html, data:text/javascript, data:application/...
+        regex: /javascript\s*:\s*[^\s"']{6,}|data\s*:\s*(?!image\/)[^\s"']{6,}/gi },
     ],
   },
 
@@ -1740,6 +1754,7 @@ function runPatterns(text) {
       // 1. Texto original
       const reOrig = makeRegex('g');
       while ((m = reOrig.exec(text)) !== null) {
+        if (rule.postFilter && !rule.postFilter(m[0], text, m.index)) continue;
         matches.push({
           rule:       rule.name,
           severity:   pattern.severity,
@@ -1765,6 +1780,7 @@ function runPatterns(text) {
         const reNorm = makeRegex('g');
         while ((m = reNorm.exec(normalizedText)) !== null) {
           if (alreadyCaught.has(m[0].toLowerCase())) continue;  // duplicado: omitir
+          if (rule.postFilter && !rule.postFilter(m[0], normalizedText, m.index)) continue;
 
           matches.push({
             rule:       rule.name,
@@ -1782,6 +1798,7 @@ function runPatterns(text) {
       for (const blob of base64Blobs) {
         const reB64 = makeRegex('g');
         while ((m = reB64.exec(blob.decoded)) !== null) {
+          if (rule.postFilter && !rule.postFilter(m[0], blob.decoded, m.index)) continue;
           matches.push({
             rule:       rule.name,
             severity:   pattern.severity,
@@ -1798,6 +1815,7 @@ function runPatterns(text) {
       for (const blob of encodedBlobs) {
         const reEnc = makeRegex('g');
         while ((m = reEnc.exec(blob.decoded)) !== null) {
+          if (rule.postFilter && !rule.postFilter(m[0], blob.decoded, m.index)) continue;
           matches.push({
             rule:       rule.name,
             severity:   pattern.severity,
@@ -2050,7 +2068,7 @@ function copyReport(event) {
   if (!lastReport) return;
 
   const lines = [
-    '=== Detector de Prompt Injection v2.3 ===',
+    '=== Detector de Prompt Injection v2.4 ===',
     `Fuente: ${lastReport.title}`,
     `Riesgo: ${lastReport.score}/100`,
     '',
@@ -2084,7 +2102,7 @@ function exportJSON() {
   }
 
   const payload = {
-    version:    '2.1',
+    version:    '2.4',
     date:       new Date().toISOString(),
     source:     lastReport.title,
     score:      lastReport.score,
@@ -2132,8 +2150,8 @@ async function analyzeURL() {
     return;
   }
 
-  const hint = document.getElementById('urlHint');
   showLoading();
+  const loadingMsg = document.getElementById('loadingMsg');
 
   const enc = encodeURIComponent(url);
   const CORS_PROXIES = [
@@ -2145,7 +2163,7 @@ async function analyzeURL() {
 
   let raw = null;
   for (const proxy of CORS_PROXIES) {
-    hint.textContent = `Intentando con ${proxy.label}…`;
+    loadingMsg.textContent = `Descargando página (${proxy.label})…`;
     try {
       const res = await fetch(proxy.url, { signal: AbortSignal.timeout(12_000) });
       if (res.ok) {
@@ -2161,7 +2179,7 @@ async function analyzeURL() {
     } catch { /* probar siguiente */ }
   }
 
-  hint.textContent = 'Se intenta descargar la página via proxies CORS públicos. Si falla, pegá el contenido en la pestaña Texto.';
+  loadingMsg.textContent = 'Extrayendo y analizando texto...';
 
   if (!raw || raw.trim().length === 0) {
     resetUI();
@@ -2183,7 +2201,7 @@ async function analyzeURL() {
   // Analizar tanto el HTML crudo (para detectar payloads ocultos) como el texto visible
   const resultsRaw  = runPatterns(raw);
   const resultsText = runPatterns(text).filter(r =>
-    !resultsRaw.some(rr => rr.match === r.match && rr.rule === r.rule)
+    !resultsRaw.some(rr => rr.text === r.text && rr.rule === r.rule)
   );
   const allResults = [...resultsRaw, ...resultsText, ...runExampleMatching(text)];
 

@@ -5,7 +5,7 @@ Herramienta web para detectar ataques de **prompt injection** en documentos y te
 [![Demo en vivo](https://img.shields.io/badge/demo-live-brightgreen)](https://anti-prompt-injection.netlify.app)
 [![Licencia MIT](https://img.shields.io/badge/licencia-MIT-blue)](LICENSE)
 [![Sin servidor](https://img.shields.io/badge/sin%20servidor-100%25%20local-purple)](#)
-[![Versión](https://img.shields.io/badge/versión-v2.3-blue)](#)
+[![Versión](https://img.shields.io/badge/versión-v2.4-blue)](#)
 
 ---
 
@@ -42,11 +42,12 @@ Herramienta web para detectar ataques de **prompt injection** en documentos y te
 ## Características
 
 - Analiza **PDF, DOCX, TXT, MD, HTML, JSON, CSV, XML, YAML** y texto pegado
-- Soporte para **URLs** via proxy CORS con reintentos automáticos
+- **Análisis de URL mejorado** — intenta 4 proxies CORS en cascada con progreso visible; extrae solo el texto visible del HTML para reducir ruido; desenvuelve automáticamente respuestas JSON de proxy; mensaje de error descriptivo con causas y solución cuando todos los proxies fallan
 - Detecta ofuscación: homóglifos, caracteres de ancho cero, unicode invisible, Base64, URL-encoding, entidades HTML numéricas
 - Normaliza el texto antes de escanear para no perder variantes ofuscadas
 - **Detección por similitud** — capa adicional que compara el texto contra una base de 298 ejemplos conocidos usando similitud Jaccard sobre bigramas de palabras
 - Sistema de **confianza por coincidencia** (Confirmado / Probable / Posible FP) con filtro ocultable
+- **Filtros de falsos positivos quirúrgicos** (`postFilter` por regla) para sitios modernos: excluye `<script src=...>` externos y bloques JSON de framework, descarta `data:image/` como MIME inofensivo, ignora `opacity:0` en elementos `<img>` (lazy-loading)
 - Puntuación de riesgo 0–100 con nivel (sin riesgo / medio / alto)
 - Exporta el informe en **JSON**
 - Tema claro / oscuro
@@ -86,7 +87,7 @@ python3 -m http.server 8080
    - *URL-encoded* — decodifica secuencias `%xx` y las analiza.
    - *HTML entities* — decodifica entidades numéricas (`&#xxx;`) y las analiza.
    - *Similitud* — compara el texto contra `prompt_injection_ejemplos.csv` usando Jaccard sobre bigramas de palabras (umbral ≥30%).
-3. **Motor de patrones** — aplica ~82 reglas regex organizadas en 19 categorías por severidad.
+3. **Motor de patrones** — aplica ~82 reglas regex organizadas en 19 categorías por severidad. Cada regla puede definir un `postFilter(matchText, fullText, index)` que descarta coincidencias válidas sintácticamente pero inocentes en contexto (ej. `opacity:0` en `<img>`, `<script src=...>` externos).
 4. **Sistema de confianza** — cada coincidencia recibe nivel `confirmed`, `likely` o `possible` según el riesgo de falso positivo de la regla y si la coincidencia cae dentro de un bloque de código o contexto educativo.
 5. **Puntuación** — combina cantidad de coincidencias, severidad y nivel de confianza (máx. 100).
 
@@ -108,7 +109,7 @@ python3 -m http.server 8080
 - Es una herramienta **heurística**. Puede haber falsos positivos y falsos negativos.
 - No cubre ataques completamente nuevos o muy personalizados.
 - La capa de similitud usa coincidencia léxica — no detecta paráfrasis semánticamente equivalentes pero léxicamente distintas.
-- El modo URL depende de proxies CORS públicos — puede fallar con sitios protegidos.
+- El modo URL usa 4 proxies CORS públicos en cascada — puede fallar con sitios que requieran login, estén detrás de firewall, o bloqueen proxies activamente. En ese caso, pegá el contenido en la pestaña "Texto".
 
 ## Contribuir
 
