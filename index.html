@@ -450,7 +450,7 @@
         <input type="text" id="urlInput" placeholder="https://ejemplo.com/documento.html">
         <button id="btnAnalyzeUrl">Analizar URL</button>
       </div>
-      <p class="hint">Se descarga la página vía un proxy CORS público. Si no es accesible, pega el texto.</p>
+      <p class="hint" id="urlHint">Se intenta descargar la página via proxies CORS públicos. Si falla, pegá el contenido en la pestaña Texto.</p>
     </div>
 
     <div class="tab-panel" data-panel="paste">
@@ -2114,31 +2114,80 @@ async function analyzeFile(file) {
   }
 }
 
+/** Extrae solo el texto visible de un HTML crudo (quita tags, scripts, styles). */
+function htmlToText(raw) {
+  const doc = new DOMParser().parseFromString(raw, 'text/html');
+  // Eliminar scripts y estilos para no generar falsos positivos
+  doc.querySelectorAll('script, style, noscript').forEach(el => el.remove());
+  return doc.body ? doc.body.innerText || doc.body.textContent : raw;
+}
+
 async function analyzeURL() {
   const url = document.getElementById('urlInput').value.trim();
-  if (!url) { alert('Por favor ingresa una URL.'); return; }
-  showLoading();
+  if (!url) { alert('Por favor ingresá una URL.'); return; }
 
-  const CORS_PROXIES = [
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-    `https://corsproxy.io/?${encodeURIComponent(url)}`,
-  ];
-
-  let text = null;
-  for (const proxyUrl of CORS_PROXIES) {
-    try {
-      const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(10_000) });
-      if (res.ok) { text = await res.text(); break; }
-    } catch { /* continuar con el siguiente proxy */ }
-  }
-
-  if (!text) {
-    alert('No se pudo obtener la URL. Prueba pegando el texto manualmente.');
-    resetUI();
+  // Validación básica de URL
+  try { new URL(url); } catch {
+    alert('URL inválida. Asegurate de incluir https:// o http://');
     return;
   }
 
-  renderResults([...runPatterns(text), ...runExampleMatching(text)], url, text);
+  const hint = document.getElementById('urlHint');
+  showLoading();
+
+  const enc = encodeURIComponent(url);
+  const CORS_PROXIES = [
+    { label: 'proxy 1/4', url: `https://api.allorigins.win/raw?url=${enc}` },
+    { label: 'proxy 2/4', url: `https://corsproxy.io/?${enc}` },
+    { label: 'proxy 3/4', url: `https://api.codetabs.com/v1/proxy?quest=${enc}` },
+    { label: 'proxy 4/4', url: `https://thingproxy.freeboard.io/fetch/${url}` },
+  ];
+
+  let raw = null;
+  for (const proxy of CORS_PROXIES) {
+    hint.textContent = `Intentando con ${proxy.label}…`;
+    try {
+      const res = await fetch(proxy.url, { signal: AbortSignal.timeout(12_000) });
+      if (res.ok) {
+        const body = await res.text();
+        // Algunos proxies devuelven JSON envuelto {contents: "..."}
+        if (body.trimStart().startsWith('{')) {
+          try { raw = JSON.parse(body).contents ?? body; } catch { raw = body; }
+        } else {
+          raw = body;
+        }
+        if (raw && raw.trim().length > 0) break;
+      }
+    } catch { /* probar siguiente */ }
+  }
+
+  hint.textContent = 'Se intenta descargar la página via proxies CORS públicos. Si falla, pegá el contenido en la pestaña Texto.';
+
+  if (!raw || raw.trim().length === 0) {
+    resetUI();
+    alert(
+      'No se pudo obtener la URL con ningún proxy.\n\n' +
+      'Posibles causas:\n' +
+      '• La página requiere login o está detrás de un firewall\n' +
+      '• El sitio bloquea proxies públicos\n' +
+      '• La URL no es accesible públicamente\n\n' +
+      'Solución: abrí la página, copiá el texto y usá la pestaña "Texto".'
+    );
+    return;
+  }
+
+  // Si parece HTML, extraer solo texto visible para reducir ruido
+  const isHTML = /<html|<!doctype/i.test(raw.slice(0, 500));
+  const text = isHTML ? htmlToText(raw) : raw;
+
+  // Analizar tanto el HTML crudo (para detectar payloads ocultos) como el texto visible
+  const resultsRaw  = runPatterns(raw);
+  const resultsText = runPatterns(text).filter(r =>
+    !resultsRaw.some(rr => rr.match === r.match && rr.rule === r.rule)
+  );
+  const allResults = [...resultsRaw, ...resultsText, ...runExampleMatching(text)];
+
+  renderResults(allResults, url, text);
 }
 
 function analyzePaste() {
