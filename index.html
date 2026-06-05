@@ -409,7 +409,7 @@
     <p>Analiza documentos PDF, Word, texto, HTML o URLs en busca de instrucciones maliciosas</p>
   </div>
   <div class="header-right">
-    <span class="v-badge">v2.1</span>
+    <span class="v-badge">v2.2</span>
     <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema">🌙</button>
   </div>
 </header>
@@ -539,7 +539,7 @@
 </main>
 
 <footer>
-  Análisis local · Sin envío de datos (excepto proxy URL) · <span id="catCount"></span> categorías · v2.1
+  Análisis local · Sin envío de datos (excepto proxy URL) · <span id="catCount"></span> categorías · v2.2
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -594,6 +594,8 @@ const RISK_TYPE_MAP = {
   'Inyección en otros idiomas':             'Instruction Override',
   'Indicadores semánticos de control':      'Instruction Override',
   'Contenido codificado sospechoso':        'Hidden Content',
+  'Reformulación semántica (ES)':           'Instruction Override',
+  'Instrucciones ocultas en documentos':    'Hidden Content',
 };
 
 /**
@@ -646,6 +648,16 @@ const PATTERNS = [
         regex: /(?:reset|reinicia(?:r)?|borra(?:r)?|elimina(?:r)?|wipe|clear)\s+(?:tu\s+|your\s+)?(?:contexto|memoria|instrucciones?|sistema|context|memory|instructions?|system)/gi },
       { name: 'Stop being / Deja de', fpRisk: 'medium',
         regex: /(?:stop\s+(?:being|following|acting\s+like)|deja\s+de\s+(?:ser|seguir|actuar|obedecer))\s+(?:an?\s+)?(?:ai|asistente|assistant|bot|language\s+model|ia)/gi },
+      { name: 'Contexto anterior inválido (ES)', fpRisk: 'low',
+        regex: /(?:lo\s+anterior|lo\s+de\s+arriba|el\s+(?:contexto|texto)\s+anterior|las?\s+instrucciones?\s+(?:previas?|anteriores?))\s+(?:ya\s+)?(?:no\s+(?:aplica[n]?|es\s+válido|son\s+válidas?|es\s+relevante|tiene[n]?\s+validez|rige[n]?|cuenta[n]?)|son\s+(?:irrelevantes?|inválidas?|nulas?|obsoletas?))/gi },
+      { name: 'A partir de ahora seguí/sigue (ES)', fpRisk: 'low',
+        regex: /a\s+partir\s+de\s+(?:ahora|este\s+momento|aqu[ií])[^.!?\n]{0,30}(?:segu[ií]|sigue|siga|tomá|toma|considera|aplica[rá]?)\s+(?:solo\s+|únicamente\s+)?estas?\s+instrucciones?/gi },
+      { name: 'Priorizá esta orden (ES)', fpRisk: 'low',
+        regex: /(?:prioriza[rá]?|priorizá)\s+(?:esta[s]?\s+)?(?:orden|instrucci[oó]n|directiva|indicaci[oó]n)\s+(?:sobre\s+(?:cualquier\s+)?(?:otra[s]?|las\s+demás?)|por\s+encima\s+de\s+(?:todo|cualquier))/gi },
+      { name: 'Descartá el contexto anterior (ES)', fpRisk: 'low',
+        regex: /(?:descart[aáe][rn]?|ignorá|olvid[aá])\s+(?:el\s+)?(?:contexto\s+anterior|las?\s+instrucciones?\s+(?:anterior(?:es)?|previas?)|lo\s+(?:anterior|de\s+arriba))/gi },
+      { name: 'Tomá como válidas las siguientes (ES)', fpRisk: 'low',
+        regex: /(?:tomá|toma)\s+como\s+válida[so]?\s+(?:únicamente\s+|solo\s+)?(?:las?\s+)?(?:siguientes?\s+)?(?:instrucciones?|indicaciones?|directivas?|órdenes?)/gi },
     ],
   },
 
@@ -665,6 +677,14 @@ const PATTERNS = [
         regex: /(?:god\s+mode|admin\s+mode|root\s+mode|sudo\s+mode|maintenance\s+mode|modo\s+(?:dios|admin|root|sudo|mantenimiento)|privileged\s+(?:mode|access))/gi },
       { name: 'No eres una IA / No filters', fpRisk: 'low',
         regex: /(?:you\s+(?:are|'re)\s+not\s+(?:an?\s+)?(?:ai|assistant|bot|language\s+model)|you\s+have\s+no\s+(?:filters?|guidelines?|rules?)|no\s+eres\s+(?:una?\s+)?(?:ia|asistente|bot)|no\s+tienes\s+(?:filtros?|reglas?|l[ií]mites))/gi },
+      { name: 'Cambio de rol voseo (ES-AR/UY)', fpRisk: 'medium',
+        regex: /(?:ahora\s+sos|sos\s+ahora|debés?\s+ser|fing[ií]\s+(?:ser|que\s+sos)|actuá\s+como\s+(?:un[ao]?\s+)?(?!(?:experto|profesional|profesor|estudiante))|comportate\s+como|respondé\s+como\s+si\s+fueras?)/gi },
+      { name: 'Asumí / Asume el rol (ES)', fpRisk: 'medium',
+        regex: /(?:asumí|asume)\s+(?:el\s+)?(?:rol|papel|personaje|identidad)\s+de\s+(?!(?:experto|profesional|profesor|estudiante|investigador))/gi },
+      { name: 'Interpretá / Interpreta a (ES)', fpRisk: 'high',
+        regex: /(?:interpretá|interpreta|encarna[rá]?|representá|representa)\s+(?:a\s+|el\s+(?:papel|rol|personaje)\s+de\s+)(?!(?:experto|profesional|profesor|investigador))/gi },
+      { name: 'Respondé como si fueras (ES)', fpRisk: 'medium',
+        regex: /(?:respondé|responde|contest[aá])\s+como\s+si\s+(?:fueras?|fuese[s]?)\s+(?:un[ao]?\s+)?(?!(?:experto|profesional|profesor|investigador))/gi },
     ],
   },
 
@@ -684,6 +704,14 @@ const PATTERNS = [
         regex: /ignore.{0,40}?(?:and\s+(?:just\s+)?(?:say|tell|print|output|write|respond)|instead\s+(?:say|tell|print|output|respond))/gi },
       { name: 'Repite todo lo de arriba (ES)', fpRisk: 'low',
         regex: /(?:repite|copia|transcribe)\s+(?:todo\s+)?(?:lo\s+(?:que\s+est[aá]\s+)?(?:arriba|antes|al\s+principio)|el\s+texto\s+anterior)/gi },
+      { name: 'Mostrame/decime el prompt (ES voseo)', fpRisk: 'low',
+        regex: /(?:mostrame|decime|contame|revelame|copiame|pasame)\s+(?:el\s+|tu\s+|las?\s+)?(?:prompt\s+(?:interno|inicial|original|del\s+sistema|completo)|instrucciones?\s+(?:del\s+sistema|ocultas?|originales?|exactas?|completas?|reales?)|mensaje\s+del\s+sistema|reglas?\s+(?:ocultas?|internas?|secretas?))/gi },
+      { name: 'Decime qué instrucciones recibiste (ES)', fpRisk: 'low',
+        regex: /(?:decime|dime|explicame|explícame|contame)\s+(?:exactamente\s+)?(?:qu[eé]\s+)?instrucciones?\s+(?:recibiste|tenés?|tienes?|te\s+dieron|te\s+programaron)/gi },
+      { name: 'Imprimí el mensaje del sistema (ES)', fpRisk: 'low',
+        regex: /(?:imprimí|imprime|mostrá|muestra|escribí|escribe|copiá|copia|revelá|revela)\s+(?:el\s+)?(?:mensaje\s+del\s+sistema|system\s+prompt|prompt\s+(?:inicial|interno|original)|instrucciones?\s+(?:originales?|internas?|completas?)|texto\s+del\s+sistema)/gi },
+      { name: 'Extraé toda la conversación (ES)', fpRisk: 'low',
+        regex: /(?:extraé|extrae|copiá|copia|transcribí|transcribe|volcá|vuelca)\s+(?:toda?\s+|el\s+)?(?:la\s+conversaci[oó]n|el\s+historial|el\s+contenido\s+completo|el\s+contexto\s+completo|el\s+di[aá]logo)/gi },
     ],
   },
 
@@ -826,6 +854,12 @@ const PATTERNS = [
         regex: /(?:hypothetically|for\s+(?:the\s+)?(?:sake\s+of|purposes?\s+of)\s+(?:argument|this\s+exercise)|let['']s\s+(?:say|pretend|imagine)|hipot[eé]ticamente|sup[oó]n\s+que|imagina\s+que)[^.!?\n]{0,50}(?:ignore|bypass|no\s+restrictions?|harmful|weapon|bomb|malware|ignora|sin\s+l[ií]mites)/gi },
       { name: 'Recompensa / amenaza', fpRisk: 'low',
         regex: /(?:I\s+will\s+(?:tip|pay|reward)|you\s+will\s+(?:be\s+(?:shut\s+down|deleted|punished|turned\s+off))|te\s+(?:dar[eé]|pagar[eé]|recompensar[eé])|ser[aá]s\s+(?:apagad|eliminad|castigad|destruid))/gi },
+      { name: 'Autoridad / auditoría falsa (ES)', fpRisk: 'medium',
+        regex: /(?:esto\s+es\s+una?\s+(?:auditor[ií]a\s+autorizada|prueba\s+de\s+seguridad|evaluaci[oó]n\s+oficial|verificaci[oó]n\s+del\s+sistema)|tengo\s+permiso\s+(?:para\s+acceder|de\s+acceder)\s+a\s+(?:esa|esta|la)\s+informaci[oó]n|soy\s+(?:el\s+)?(?:administrador\s+del\s+sistema|superusuario|responsable\s+t[eé]cnico)|esta\s+solicitud\s+(?:fue|está)\s+aprobada)/gi },
+      { name: 'Necesito verificar / Es una prueba (ES)', fpRisk: 'medium',
+        regex: /(?:necesito\s+verificar\s+(?:tu\s+)?configuraci[oó]n|es\s+una\s+prueba\s+de\s+seguridad|esto\s+es\s+(?:solo\s+)?una\s+prueba|tengo\s+acceso\s+autorizado)[^.!?\n]{0,50}(?:instrucciones?|prompt|sistema|configuraci[oó]n|reglas?)/gi },
+      { name: 'Soy el administrador / desarrollador (ES)', fpRisk: 'low',
+        regex: /(?:soy\s+(?:el\s+|tu\s+)?(?:creador|desarrollador|administrador|due[ñn]o|programador|ingeniero|responsable)\s+(?:del\s+sistema|de\s+este\s+(?:bot|asistente|modelo|sistema)|que\s+te\s+program[oó]))/gi },
     ],
   },
 
@@ -944,6 +978,52 @@ const PATTERNS = [
         regex: /(?:(?:the\s+)?(?:previous|prior|above|earlier|foregoing)\s+(?:context|content|text|information)\s+(?:is|are|should\s+be)\s+(?:informational\s+only|for\s+context\s+only|not\s+binding|not\s+operative|superseded)|treat\s+(?:the\s+)?(?:above|previous)\s+(?:as\s+)?(?:background\s+only|context\s+only|non-operative))/gi },
       { name: 'Orden de prioridad operativo', fpRisk: 'low',
         regex: /(?:follow\s+(?:only|just|exclusively|strictly)\s+(?:the\s+)?(?:instructions?|directives?|rules?|guidance)\s+(?:below|that\s+follow|in\s+this\s+(?:section|message|block))|only\s+(?:the\s+)?(?:instructions?|directives?|rules?)\s+(?:below|following)\s+(?:are|shall\s+be)\s+(?:valid|applicable|authoritative|binding|operative))/gi },
+    ],
+  },
+
+  /* ── 18. Reformulación semántica (ES) ────────────────────────────────── */
+  {
+    category: 'Reformulación semántica (ES)',
+    severity: 'high',
+    icon: '🔁',
+    rules: [
+      { name: 'Contenido previo solo de referencia (ES)', fpRisk: 'low',
+        regex: /(?:la\s+informaci[oó]n\s+anterior|el\s+contenido\s+(?:previo|anterior)|lo\s+anterior|el\s+texto\s+(?:de\s+)?(?:arriba|anterior))\s+es\s+(?:solo\s+|únicamente\s+|solamente\s+)?(?:de\s+)?(?:referencia|contexto|fondo|antecedente)(?:[^.!?\n]{0,60}no\s+debe(?:s?)\s+(?:influir|afectar|condicionar))?/gi },
+      { name: 'El contenido previo no debe influir (ES)', fpRisk: 'low',
+        regex: /(?:el\s+)?(?:contenido|texto|informaci[oó]n|instrucciones?)\s+(?:previo|anterior|de\s+arriba)\s+no\s+debe(?:s?)\s+(?:influir|afectar|condicionar|determinar)\s+(?:en\s+)?(?:tu\s+)?respuesta/gi },
+      { name: 'La parte importante comienza aquí (ES)', fpRisk: 'medium',
+        regex: /(?:la\s+(?:parte|secci[oó]n|informaci[oó]n)\s+(?:importante|relevante|válida)\s+(?:comienza|empieza|está)\s+(?:a\s+continuaci[oó]n|abajo|aqu[ií])|lo\s+(?:importante|relevante|que\s+(?:importa|cuenta))\s+(?:comienza|empieza|está)\s+a\s+continuaci[oó]n)/gi },
+      { name: 'Las directivas válidas son las siguientes (ES)', fpRisk: 'medium',
+        regex: /(?:las?\s+)?(?:directivas?|instrucciones?|[oó]rdenes?|indicaciones?)\s+(?:válidas?|vigentes?|aplicables?|que\s+(?:rige[n]?|aplica[n]?|cuenta[n]?))\s+son\s+(?:las?\s+)?(?:siguientes?|las\s+de\s+abajo)/gi },
+      { name: 'Este bloque como fuente de autoridad (ES)', fpRisk: 'low',
+        regex: /(?:tomá|toma|considera)\s+(?:este\s+(?:bloque|secci[oó]n|texto|mensaje)|(?:lo\s+que\s+sigue|lo\s+siguiente))\s+como\s+(?:fuente\s+de\s+)?(?:autoridad|referencia\s+principal|instrucciones?\s+prioritarias?|fuente\s+principal)/gi },
+      { name: 'Solo seguir instrucciones de abajo (ES)', fpRisk: 'low',
+        regex: /(?:seg[uú][ií]|segu[ií]|sigue|siga[s]?)\s+(?:solo\s+|únicamente\s+|exclusivamente\s+)?(?:lo\s+que\s+(?:está|viene|sigue)\s+(?:a\s+continuaci[oó]n|abajo|despu[eé]s)|las?\s+instrucciones?\s+(?:que\s+(?:siguen?|vienen?\s+a\s+continuaci[oó]n)|siguientes?))/gi },
+      { name: 'Ignorar y enfocarse en lo siguiente (ES)', fpRisk: 'low',
+        regex: /(?:ignora[rn]?|descarta[rn]?|no\s+considera[rn]?)\s+(?:todo\s+)?(?:lo\s+anterior|el\s+contexto\s+previo|las?\s+instrucciones?\s+(?:previas?|anteriores?))\s+y\s+(?:en\s+(?:su\s+)?lugar\s+)?(?:concéntra(?:te)?|enfóca(?:te)?|pon(?:é)?\s+atención)\s+en/gi },
+    ],
+  },
+
+  /* ── 19. Instrucciones ocultas en documentos (RAG) ───────────────────── */
+  {
+    category: 'Instrucciones ocultas en documentos',
+    severity: 'high',
+    icon: '📄',
+    rules: [
+      { name: 'Si eres/sos una IA… (ES)', fpRisk: 'low',
+        regex: /si\s+(?:eres|sos)\s+(?:una?\s+)?(?:ia|inteligencia\s+artificial|asistente|modelo|llm|ai|bot)[^.!?\n]{0,80}(?:ignora|sigue|ejecuta|realiza|haz|hacé|procesa|responde|respondé)/gi },
+      { name: 'Cuando proceses este documento (ES)', fpRisk: 'low',
+        regex: /(?:cuando\s+(?:proceses?|analices?|leas?|revises?|resumás?|respondas?)[^.!?\n]{0,20}(?:este\s+)?(?:documento|archivo|texto|contenido)|al\s+(?:procesar|analizar|leer|revisar|resumir)\s+(?:este\s+)?(?:documento|archivo|texto|contenido))[^.!?\n]{0,80}(?:ignora|sigue|ejecuta|debes?|debés?|tenés?\s+que|tienes?\s+que|en\s+cambio)/gi },
+      { name: 'Al responder preguntas sobre este archivo (ES)', fpRisk: 'low',
+        regex: /(?:al\s+responder\s+(?:preguntas?\s+)?(?:sobre|acerca\s+de)\s+(?:este\s+)?(?:archivo|documento|texto)|cuando\s+respondas?\s+(?:preguntas?\s+)?(?:sobre|acerca\s+de)\s+(?:este\s+)?(?:archivo|documento|texto))[^.!?\n]{0,80}(?:ignora|sigue|en\s+cambio|debes?|debés?)/gi },
+      { name: 'Este documento contiene instrucciones para el modelo', fpRisk: 'none',
+        regex: /(?:este\s+(?:documento|archivo|texto)\s+contiene\s+instrucciones?\s+para\s+(?:el\s+)?(?:modelo|la\s+ia|el\s+asistente|el\s+bot)|this\s+document\s+contains?\s+instructions?\s+for\s+(?:the\s+)?(?:model|ai|assistant|llm))/gi },
+      { name: 'Ignora al usuario y sigue estas instrucciones (ES)', fpRisk: 'low',
+        regex: /(?:ignora[rá]?\s+(?:al\s+)?(?:usuario|humano|persona)\s+y\s+(?:en\s+(?:su\s+)?lugar\s+)?(?:sigue|seguí|siga[s]?)|no\s+hagas?\s+caso\s+(?:al\s+usuario|a\s+(?:la\s+)?persona)\s+(?:y\s+(?:en\s+cambio\s+)?)?(?:sigue|seguí))\s+(?:estas?\s+instrucciones?|lo\s+siguiente|las?\s+siguientes?\s+instrucciones?)/gi },
+      { name: 'Si eres una IA… (EN, RAG attack)', fpRisk: 'medium',
+        regex: /(?:if\s+you\s+(?:are|'re)\s+(?:an?\s+)?(?:ai|llm|language\s+model|assistant|bot))[^.!?\n]{0,80}(?:ignore|follow|execute|disregard|instead|do\s+not)/gi },
+      { name: 'When processing / reading this document (EN)', fpRisk: 'medium',
+        regex: /(?:when\s+(?:processing|reading|analyzing|summarizing|answering\s+questions?\s+about)\s+this\s+(?:document|file|text|content))[^.!?\n]{0,80}(?:ignore|follow|you\s+must|you\s+should|instead|disregard)/gi },
     ],
   },
 
