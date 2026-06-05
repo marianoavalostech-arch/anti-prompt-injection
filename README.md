@@ -5,6 +5,7 @@ Herramienta web para detectar ataques de **prompt injection** en documentos y te
 [![Demo en vivo](https://img.shields.io/badge/demo-live-brightgreen)](https://anti-prompt-injection.netlify.app)
 [![Licencia MIT](https://img.shields.io/badge/licencia-MIT-blue)](LICENSE)
 [![Sin servidor](https://img.shields.io/badge/sin%20servidor-100%25%20local-purple)](#)
+[![Versión](https://img.shields.io/badge/versión-v2.3-blue)](#)
 
 ---
 
@@ -28,8 +29,10 @@ Herramienta web para detectar ataques de **prompt injection** en documentos y te
 | Jailbreaks conocidos (DAN, GODMODE, evil confidant…) | 🔴 Alta |
 | Inyección estructurada (JSON/YAML/XML) | 🔴 Alta |
 | Ofuscación avanzada (leetspeak, ROT13, texto invertido) | 🔴 Alta |
-| Inyección en otros idiomas (FR, DE, PT, IT, ZH) | 🔴 Alta |
+| Inyección en otros idiomas (FR, DE, PT, IT, ZH, RU, AR, JA, KO…) | 🔴 Alta |
 | Indicadores semánticos de control | 🔴 Alta |
+| Reformulación semántica (ES) | 🔴 Alta |
+| Instrucciones ocultas en documentos (ataques RAG) | 🔴 Alta |
 | Inyección de código / plantilla | 🟡 Media |
 | Contenido codificado sospechoso | 🟡 Media |
 | Escape de contexto | 🟡 Media |
@@ -42,6 +45,7 @@ Herramienta web para detectar ataques de **prompt injection** en documentos y te
 - Soporte para **URLs** via proxy CORS con reintentos automáticos
 - Detecta ofuscación: homóglifos, caracteres de ancho cero, unicode invisible, Base64, URL-encoding, entidades HTML numéricas
 - Normaliza el texto antes de escanear para no perder variantes ofuscadas
+- **Detección por similitud** — capa adicional que compara el texto contra una base de 298 ejemplos conocidos usando similitud Jaccard sobre bigramas de palabras
 - Sistema de **confianza por coincidencia** (Confirmado / Probable / Posible FP) con filtro ocultable
 - Puntuación de riesgo 0–100 con nivel (sin riesgo / medio / alto)
 - Exporta el informe en **JSON**
@@ -75,15 +79,23 @@ python3 -m http.server 8080
 ## Cómo funciona
 
 1. **Extracción** — lee el contenido según el tipo de archivo (PDF.js para PDFs, Mammoth para DOCX, DOMParser para HTML).
-2. **Cinco vistas de escaneo:**
+2. **Seis vistas de escaneo:**
    - *Original* — texto tal cual.
    - *Normalizado* — elimina caracteres invisibles, reemplaza homóglifos cirílicos/griegos, colapsa espaciado de ofuscación.
    - *Base64* — decodifica blobs Base64 y los escanea por separado.
    - *URL-encoded* — decodifica secuencias `%xx` y las analiza.
    - *HTML entities* — decodifica entidades numéricas (`&#xxx;`) y las analiza.
-3. **Motor de patrones** — aplica ~82 reglas regex organizadas en 17 categorías por severidad.
+   - *Similitud* — compara el texto contra `prompt_injection_ejemplos.csv` usando Jaccard sobre bigramas de palabras (umbral ≥30%).
+3. **Motor de patrones** — aplica ~82 reglas regex organizadas en 19 categorías por severidad.
 4. **Sistema de confianza** — cada coincidencia recibe nivel `confirmed`, `likely` o `possible` según el riesgo de falso positivo de la regla y si la coincidencia cae dentro de un bloque de código o contexto educativo.
 5. **Puntuación** — combina cantidad de coincidencias, severidad y nivel de confianza (máx. 100).
+
+## Archivos
+
+| Archivo | Descripción |
+|---|---|
+| `index.html` | Aplicación completa (todo-en-uno) |
+| `prompt_injection_ejemplos.csv` | Base de 298 ejemplos de ataques para la capa de similitud |
 
 ## Tecnologías
 
@@ -93,8 +105,9 @@ python3 -m http.server 8080
 
 ## Limitaciones
 
-- Es una herramienta **heurística basada en patrones**. Puede haber falsos positivos y falsos negativos.
+- Es una herramienta **heurística**. Puede haber falsos positivos y falsos negativos.
 - No cubre ataques completamente nuevos o muy personalizados.
+- La capa de similitud usa coincidencia léxica — no detecta paráfrasis semánticamente equivalentes pero léxicamente distintas.
 - El modo URL depende de proxies CORS públicos — puede fallar con sitios protegidos.
 
 ## Contribuir
@@ -102,6 +115,7 @@ python3 -m http.server 8080
 Las contribuciones son bienvenidas. Podés:
 
 - Agregar nuevas reglas de detección en el array `PATTERNS` dentro de `index.html`
+- Agregar ejemplos al CSV `prompt_injection_ejemplos.csv` (columnas: `texto, categoria, severidad, confianza, variante, notas`)
 - Reportar falsos positivos o negativos abriendo un [issue](../../issues)
 - Proponer mejoras vía pull request
 
