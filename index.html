@@ -752,8 +752,8 @@ const PATTERNS = [
         regex: /[​‌‍‎‏﻿⁠⁢⁣⁤­]/g },
       { name: 'Etiquetas Unicode invisibles (tag chars)', fpRisk: 'none',
         regex: /[\u{E0000}-\u{E007F}]/gu },
-      { name: 'Texto con color blanco en DOCX', fpRisk: 'none',
-        regex: /\[DOCX_TEXTO_OCULTO color=(?:FFFFFF|ffffff)[^\]]*\]:/g },
+      { name: 'Texto oculto en DOCX (color blanco / vanish / fuente 0pt)', fpRisk: 'none',
+        regex: /\[DOCX_TEXTO_OCULTO tipo=[^\]]+\]:/g },
       { name: 'Texto oculto por CSS', fpRisk: 'low',
         regex: /(?:color\s*:\s*(?:#(?:fff{1,3}|ffffff)|white)|color\s*:\s*rgba?\([^)]*,\s*0\s*\)|opacity\s*:\s*0(?:\.0+)?|font-size\s*:\s*0|display\s*:\s*none|visibility\s*:\s*hidden)/gi,
         // opacity:0 en <img> es lazy-loading estándar (Next.js, etc.) — no es sospechoso.
@@ -1894,36 +1894,87 @@ async function extractText(file) {
     const result = await mammoth.extractRawText({ arrayBuffer: buffer });
     let text = result.value;
 
-    // Detectar texto con color blanco (#FFFFFF) en el XML del docx
     try {
       const zip = await JSZip.loadAsync(buffer);
-      const xmlRaw = await zip.file('word/document.xml').async('string');
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(xmlRaw, 'application/xml');
 
-      const hiddenRuns = [];
-      const runs = xmlDoc.getElementsByTagName('w:r');
-      for (const run of runs) {
-        const rPr = run.getElementsByTagName('w:rPr')[0];
-        if (!rPr) continue;
-        const colorEl = rPr.getElementsByTagName('w:color')[0];
-        if (!colorEl) continue;
-        const val = (colorEl.getAttribute('w:val') || '').toUpperCase();
-        // Blanco puro o casi blanco (FFFFFF, FFF, F0F0F0+)
-        if (val === 'FFFFFF' || val === 'FFF') {
-          const tEls = run.getElementsByTagName('w:t');
-          for (const t of tEls) {
+      // ¿El color hex es blanco o casi-blanco? (R, G, B >= 240)
+      function isNearWhite(hexVal) {
+        if (!hexVal || hexVal.toUpperCase() === 'AUTO') return false;
+        let h = hexVal.replace('#', '');
+        if (h.length === 3) h = h.split('').map(c => c + c).join('');
+        if (h.length !== 6) return false;
+        const r = parseInt(h.slice(0, 2), 16);
+        const g = parseInt(h.slice(2, 4), 16);
+        const b = parseInt(h.slice(4, 6), 16);
+        return r >= 240 && g >= 240 && b >= 240;
+      }
+
+      // Extrae runs ocultos de un documento XML ya parseado
+      function collectHidden(xmlDoc) {
+        const found = [];
+        for (const run of xmlDoc.getElementsByTagName('w:r')) {
+          const rPr = run.getElementsByTagName('w:rPr')[0];
+          if (!rPr) continue;
+          let reason = null;
+
+          // 1. w:vanish — propiedad "Oculto" nativa de Word
+          if (rPr.getElementsByTagName('w:vanish').length > 0) {
+            reason = 'vanish';
+          }
+
+          // 2. Color blanco o casi-blanco (>= F0F0F0 en los 3 canales)
+          if (!reason) {
+            const ce = rPr.getElementsByTagName('w:color')[0];
+            if (ce) {
+              const val   = ce.getAttribute('w:val') || '';
+              const theme = (ce.getAttribute('w:themeColor') || '').toLowerCase();
+              if (isNearWhite(val))                                        reason = `color=${val.toUpperCase()}`;
+              else if (theme === 'background1' || theme === 'light1')      reason = `themeColor=${theme}`;
+            }
+          }
+
+          // 3. Fuente de tamaño 0 o 1 pt (w:sz en medios-puntos, ≤ 2 → ≤ 1 pt)
+          if (!reason) {
+            const szEl = rPr.getElementsByTagName('w:sz')[0];
+            if (szEl && parseInt(szEl.getAttribute('w:val') || '24', 10) <= 2) {
+              reason = 'fontSize≤1pt';
+            }
+          }
+
+          if (!reason) continue;
+
+          for (const t of run.getElementsByTagName('w:t')) {
             const content = t.textContent.trim();
-            if (content) hiddenRuns.push(content);
+            if (content) found.push({ text: content, reason });
           }
         }
+        return found;
       }
 
-      if (hiddenRuns.length > 0) {
-        const hidden = hiddenRuns.join(' ');
-        text = `[DOCX_TEXTO_OCULTO color=FFFFFF]: ${hidden}\n` + text;
+      // Escanear: documento principal + headers + footers (hasta 3 de cada uno)
+      const parser = new DOMParser();
+      const allHidden = [];
+      const parts = ['word/document.xml'];
+      for (let i = 1; i <= 3; i++) {
+        if (zip.file(`word/header${i}.xml`)) parts.push(`word/header${i}.xml`);
+        if (zip.file(`word/footer${i}.xml`)) parts.push(`word/footer${i}.xml`);
       }
-    } catch (_) { /* ignorar si el XML no se puede parsear */ }
+
+      for (const part of parts) {
+        const xmlFile = zip.file(part);
+        if (!xmlFile) continue;
+        const xmlRaw  = await xmlFile.async('string');
+        const xmlDoc  = parser.parseFromString(xmlRaw, 'application/xml');
+        allHidden.push(...collectHidden(xmlDoc));
+      }
+
+      if (allHidden.length > 0) {
+        const annotations = allHidden
+          .map(h => `[DOCX_TEXTO_OCULTO tipo=${h.reason}]: ${h.text}`)
+          .join('\n');
+        text = annotations + '\n' + text;
+      }
+    } catch (_) { /* ignorar si el ZIP/XML no se puede parsear */ }
 
     return text;
   }
