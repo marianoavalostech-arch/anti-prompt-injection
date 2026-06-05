@@ -1383,7 +1383,7 @@ const EXAMPLE_DB = [
 
 function simTokenize(str) {
   return str.toLowerCase()
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')  // quitar tildes
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')  // quitar tildes (diacríticos U+0300–U+036F)
     .replace(/[^\w\s]/g, ' ')
     .split(/\s+/)
     .filter(w => w.length > 2);
@@ -2300,10 +2300,9 @@ async function analyzeURL() {
   const text = isHTML ? htmlToText(raw) : raw;
 
   // Analizar tanto el HTML crudo (para detectar payloads ocultos) como el texto visible
-  const resultsRaw  = runPatterns(raw);
-  const resultsText = runPatterns(text).filter(r =>
-    !resultsRaw.some(rr => rr.text === r.text && rr.rule === r.rule)
-  );
+  const resultsRaw      = runPatterns(raw);
+  const rawCategories   = new Set(resultsRaw.map(r => r.category));
+  const resultsText     = runPatterns(text).filter(r => !rawCategories.has(r.category));
   const allResults = [...resultsRaw, ...resultsText, ...runExampleMatching(text)];
 
   renderResults(allResults, url, text);
@@ -2313,7 +2312,11 @@ function analyzePaste() {
   const text = document.getElementById('pasteInput').value;
   if (!text.trim()) { alert('Por favor ingresa texto para analizar.'); return; }
   showLoading();
-  renderResults([...runPatterns(text), ...runExampleMatching(text)], 'Texto pegado', text);
+  // setTimeout cede el hilo al navegador para que pinte el spinner
+  // antes de que el análisis sincrónico bloquee la UI.
+  setTimeout(() => {
+    renderResults([...runPatterns(text), ...runExampleMatching(text)], 'Texto pegado', text);
+  }, 0);
 }
 
 

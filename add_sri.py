@@ -28,6 +28,10 @@ CDN_SCRIPTS = [
         "url": "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js",
         "tag": 'src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"',
     },
+    {
+        "url": "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js",
+        "tag": 'src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"',
+    },
 ]
 
 HTML_FILE = Path(__file__).parent / "index.html"

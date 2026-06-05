@@ -96,6 +96,7 @@ python3 -m http.server 8080
 | Archivo | Descripción |
 |---|---|
 | `index.html` | Aplicación completa (todo-en-uno) |
+| `add_sri.py` | Agrega hashes SRI a los scripts CDN (pdf.js, mammoth.js, jszip.js) |
 | `prompt_injection_ejemplos.csv` | Base de 298 ejemplos de ataques para la capa de similitud |
 
 ## Tecnologías
@@ -103,6 +104,14 @@ python3 -m http.server 8080
 - Vanilla JS (sin frameworks)
 - [PDF.js](https://mozilla.github.io/pdf.js/) — extracción de texto en PDFs
 - [Mammoth.js](https://github.com/mwilliamson/mammoth.js) — extracción de texto en DOCX
+
+## Changelog
+
+### v2.4.1 (2026-06-05)
+- **Bug fix:** corregida deduplicación en el análisis de URL — la comparación `rr.text === r.text` comparaba `undefined === undefined` y descartaba todos los hallazgos del texto visible cuando existían hallazgos en el HTML crudo. Ahora se deduplica correctamente por `category`.
+- **Bug fix:** el spinner de carga no se pintaba en la pestaña "Pegar texto" porque `renderResults` se llamaba síncronamente justo después de `showLoading()`. Se añadió `setTimeout(..., 0)` para ceder el hilo al navegador antes de procesar.
+- **Mejora `add_sri.py`:** se agregó `jszip.min.js` a la lista de scripts CDN con SRI (antes solo cubría pdf.js y mammoth.js).
+- **Mejora legibilidad:** la regex de tildes en `simTokenize` ahora usa `[̀-ͯ]` en lugar de caracteres combinantes literales invisibles.
 
 ## Limitaciones
 
