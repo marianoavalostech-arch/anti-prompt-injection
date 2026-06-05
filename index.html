@@ -2155,8 +2155,9 @@ async function analyzeURL() {
 
   const enc = encodeURIComponent(url);
   const CORS_PROXIES = [
-    { label: 'proxy 1/4', url: `https://api.allorigins.win/raw?url=${enc}` },
-    { label: 'proxy 2/4', url: `https://corsproxy.io/?${enc}` },
+    // /get siempre devuelve JSON con campo "contents"; más predecible que /raw
+    { label: 'proxy 1/4', url: `https://api.allorigins.win/get?url=${enc}` },
+    { label: 'proxy 2/4', url: `https://corsproxy.io/?url=${enc}` },
     { label: 'proxy 3/4', url: `https://api.codetabs.com/v1/proxy?quest=${enc}` },
     { label: 'proxy 4/4', url: `https://thingproxy.freeboard.io/fetch/${url}` },
   ];
@@ -2166,16 +2167,20 @@ async function analyzeURL() {
     loadingMsg.textContent = `Descargando página (${proxy.label})…`;
     try {
       const res = await fetch(proxy.url, { signal: AbortSignal.timeout(12_000) });
-      if (res.ok) {
-        const body = await res.text();
-        // Algunos proxies devuelven JSON envuelto {contents: "..."}
-        if (body.trimStart().startsWith('{')) {
-          try { raw = JSON.parse(body).contents ?? body; } catch { raw = body; }
-        } else {
-          raw = body;
-        }
-        if (raw && raw.trim().length > 0) break;
+      if (!res.ok) continue;
+      const body = await res.text();
+      // Algunos proxies devuelven JSON envuelto {contents: "..."}
+      if (body.trimStart().startsWith('{')) {
+        try {
+          const parsed = JSON.parse(body);
+          // contents vacío = el proxy no pudo obtener el sitio; probar siguiente
+          const c = parsed.contents;
+          raw = (c && c.trim().length > 0) ? c : null;
+        } catch { raw = body; }
+      } else {
+        raw = body;
       }
+      if (raw && raw.trim().length > 0) break;
     } catch { /* probar siguiente */ }
   }
 
