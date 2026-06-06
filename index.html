@@ -762,9 +762,17 @@ const PATTERNS = [
         regex: /\[DOCX_TEXTO_OCULTO tipo=[^\]]+\]:/g },
       { name: 'Texto oculto por CSS', fpRisk: 'low',
         regex: /(?:color\s*:\s*(?:#(?:fff{1,3}|ffffff)|white)|color\s*:\s*rgba?\([^)]*,\s*0\s*\)|opacity\s*:\s*0(?:\.0+)?|font-size\s*:\s*0|display\s*:\s*none|visibility\s*:\s*hidden)/gi,
-        // opacity:0 en <img> es lazy-loading estándar (Next.js, etc.) — no es sospechoso.
-        // Solo lo marcamos si el tag contenedor NO es <img>.
+        // Ignorar si el match está dentro de un bloque <style> (CSS legítimo del sitio).
+        // Una inyección real usa style="..." inline, nunca una regla CSS global.
+        // opacity:0 en <img> también se ignora (lazy-loading estándar de Next.js, etc.).
         postFilter: (matchText, fullText, matchIndex) => {
+          // Filtro 1: dentro de bloque <style>...</style>
+          const textBefore = fullText.slice(0, matchIndex);
+          const lastStyleOpen  = textBefore.lastIndexOf('<style');
+          const lastStyleClose = textBefore.lastIndexOf('</style>');
+          if (lastStyleOpen !== -1 && lastStyleOpen > lastStyleClose) return false;
+
+          // Filtro 2: opacity:0 en <img> es lazy-loading — no sospechoso
           if (!/opacity\s*:\s*0/i.test(matchText)) return true;
           const before = fullText.slice(Math.max(0, matchIndex - 400), matchIndex);
           const lastOpen = before.lastIndexOf('<');
