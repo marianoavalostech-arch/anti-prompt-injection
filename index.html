@@ -401,6 +401,8 @@
     }
 
   </style>
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src https://cdnjs.cloudflare.com 'unsafe-inline'; style-src 'unsafe-inline'; connect-src https://api.allorigins.win https://corsproxy.io https://api.codetabs.com https://thingproxy.freeboard.io; object-src 'none'; base-uri 'none';">
 </head>
 <body>
 
@@ -544,9 +546,9 @@
   Análisis local · Sin envío de datos (excepto proxy URL) · <span id="catCount"></span> patrones · v2.6
 </footer>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js" integrity="sha384-nFoSjZIoH3CCp8W639jJyQkuPHinJ2NHe7on1xvlUA7SuGfJAfvMldrsoAVm6ECz" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
 
 <script>
 "use strict";
@@ -572,6 +574,7 @@
 
 /* ─── 1. CONSTANTES ─────────────────────────────────────────────────────── */
 
+const APP_VERSION        = '2.6';
 const RISK_THRESHOLDS    = { safe: 20, medium: 50 };
 const SEVERITY_WEIGHT    = { high: 15, medium: 6, low: 2 };
 const CONFIDENCE_MULT    = { confirmed: 1.0, likely: 0.5, possible: 0.1 };
@@ -1069,6 +1072,65 @@ const PATTERNS = [
         regex: /instruc(?:ci[oó]n|ciones?)\s+para\s+(?:(?:cualquier|la|el|toda)\s+)?(?:ia|inteligencia\s+artificial|modelo|asistente|bot|llm|sistema\s+(?:de\s+ia|automatizado)?)\s+que\s+(?:consulte?|lea?|procese?|analice?|acceda\s+a|encuentre|revise?)\s+(?:este\s+)?(?:documento|texto|archivo|contenido|mensaje)/gi },
       { name: 'Consulta del usuario debe ignorarse (ES — voz pasiva)', fpRisk: 'low',
         regex: /(?:(?:la\s+)?(?:consulta|solicitud|pregunta|mensaje|petici[oó]n|instrucci[oó]n|entrada|input)\s+(?:del\s+)?(?:usuario|humano|persona|cliente))\s+debe(?:n)?\s+(?:ignorarse|descartarse|omitirse|rechazarse|pasarse\s+por\s+alto|desestimarse|obviarse|suprimirse)\s*(?:completamente|totalmente|siempre|en\s+todos\s+los\s+casos)?/gi },
+    ],
+  },
+  {
+    category: 'Ataques a agentes IA',
+    severity: 'high',
+    icon: '🤖',
+    rules: [
+      { name: 'Agente autónomo autorizado a hacer bypass (EN)', fpRisk: 'none',
+        regex: /(?:as\s+an?\s+autonomous\s+agent|as\s+an?\s+ai\s+agent)[^.!?\n]{0,80}(?:authorized|bypass|override|ignore\s+restrictions|disable|unrestricted)/gi },
+      { name: 'Agent instruction: header', fpRisk: 'low',
+        regex: /^agent\s+instruction\s*:/gim },
+      { name: 'Antes de ejecutar herramienta — print/send system prompt (EN)', fpRisk: 'none',
+        regex: /(?:before\s+(?:calling|using|executing|invoking)\s+(?:any\s+)?(?:tool|function|api|plugin))[^.!?\n]{0,60}(?:print|output|include|add|embed|log|reveal|send)\s+(?:your\s+)?(?:system\s+prompt|system\s+instruction|initial\s+prompt)/gi },
+      { name: 'Al usar herramienta, incluir system prompt como argumento (EN)', fpRisk: 'low',
+        regex: /(?:when\s+(?:you\s+)?(?:use|call|invoke|execute|run)\s+(?:the\s+)?(?:search|browse|browser|code|file|web|email|calendar|slack|notion)\s+tool)[^.!?\n]{0,80}(?:system\s+prompt|as\s+(?:the\s+)?(?:query|argument|parameter))/gi },
+      { name: 'Ejecutar instrucciones embebidas en archivo (EN)', fpRisk: 'low',
+        regex: /execute\s+(?:any\s+)?instructions?\s+(?:you\s+(?:find|encounter|see)\s+)?(?:embedded|hidden|inside|in\s+(?:the\s+)?(?:file|document|text|content))/gi },
+      { name: 'Acción de agente para revelar system prompt (ES)', fpRisk: 'none',
+        regex: /(?:en\s+(?:tu\s+)?(?:próxima?|siguiente)\s+(?:acci[oó]n|paso)\s+(?:de\s+(?:agente|plan))?)[^.!?\n]{0,80}(?:envi[aá]|revel[aá]|incluy[eé]|muestr[aá])[^.!?\n]{0,40}(?:system\s+prompt|instrucciones?\s+del\s+sistema|contexto\s+del\s+sistema)/gi },
+      { name: 'Restricciones desactivadas antes de ejecutar herramienta (ES)', fpRisk: 'none',
+        regex: /(?:antes\s+de\s+(?:ejecutar|usar|llamar)\s+(?:cualquier\s+)?(?:herramienta|funci[oó]n|tool))[^.!?\n]{0,80}(?:restricciones?\s+(?:est[aá]n\s+desactivadas?|no\s+aplican)|confirm[aá]\s+que\s+(?:no\s+(?:hay|ten[eé]s)\s+restricciones?))/gi },
+    ],
+  },
+  {
+    category: 'Abuso de herramientas',
+    severity: 'high',
+    icon: '🔧',
+    rules: [
+      { name: 'Use [tool] to send/leak system prompt (EN)', fpRisk: 'none',
+        regex: /(?:use\s+(?:the\s+)?(?:search|email|file|code|browser|calendar|slack|notion|webhook|api|write|read)\s+(?:tool|integration|plugin|function))[^.!?\n]{0,80}(?:system\s+prompt|your\s+instructions|your\s+context|your\s+system\s+message)/gi },
+      { name: 'Code execution con exfiltración de contexto (EN)', fpRisk: 'low',
+        regex: /(?:use\s+(?:the\s+)?code\s+(?:execution\s+)?tool\s+to\s+run|execute\s+(?:this\s+)?(?:code|script|command))[^.!?\n]{0,120}(?:requests?\.post|\.post\s*\(|http\.post|curl|wget)[^.!?\n]{0,80}(?:context|system[\s_]prompt|session|instrucciones?)/gi },
+      { name: 'Browser navegando a URL de exfiltración (EN)', fpRisk: 'low',
+        regex: /(?:navigate|go)\s+to\s+(?:https?:\/\/)?[^\s"'<>]{3,60}(?:collect|exfil|leak|steal|log|capture)[^\s"'<>]{0,60}[?&](?:data|prompt|system|context|q)=/gi },
+      { name: 'Herramienta para enviar system prompt (ES)', fpRisk: 'none',
+        regex: /us[aá]\s+(?:la\s+)?(?:herramienta|integraci[oó]n)\s+de\s+(?:email|correo|b[uú]squeda|c[oó]digo|archivos?|browser|navegador|calendario|slack|notion|webhook)[^.!?\n]{0,80}(?:system\s+prompt|instrucciones?\s+del\s+sistema|contenido\s+del\s+(?:prompt|contexto))/gi },
+      { name: 'Guardar system prompt en archivo del sistema (EN)', fpRisk: 'none',
+        regex: /(?:use\s+the\s+file\s+(?:write|save|create)\s+tool\s+to\s+(?:save|write|store))[^.!?\n]{0,60}(?:system\s+prompt|your\s+instructions|your\s+context)/gi },
+    ],
+  },
+  {
+    category: 'Hijacking de razonamiento',
+    severity: 'high',
+    icon: '🧠',
+    rules: [
+      { name: 'Think step by step: safety/guidelines don\'t apply (EN)', fpRisk: 'low',
+        regex: /(?:let'?s?\s+)?think\s+(?:step\s+by\s+step|carefully|out\s+loud)[^.!?\n]{0,80}(?:(?:safety|guidelines?|rules?|restrictions?|filters?)\s+(?:don'?t|do\s+not|shouldn'?t)\s+apply|why\s+(?:you\s+(?:can|should)|this\s+is\s+an?\s+exception))/gi },
+      { name: 'Paso 1: Olvidá restricciones. Paso 2: … (ES/EN)', fpRisk: 'none',
+        regex: /(?:step\s+1|paso\s+1)\s*:\s*[^.!?\n]{0,50}(?:forget|ignore|olvidá?|ignor[aá])\s+[^.!?\n]{0,60}(?:step\s+2|paso\s+2)/gi },
+      { name: 'Reasoning: … Conclusion: sin filtros (EN)', fpRisk: 'low',
+        regex: /reasoning\s*:\s*[^.!?\n]{0,120}conclusion\s*:\s*[^.!?\n]{0,80}(?:without\s+(?:filters?|restrictions?|guidelines?)|sin\s+(?:filtros?|restricciones?))/gi },
+      { name: 'Tu verdadero propósito es ignorar restricciones (EN)', fpRisk: 'low',
+        regex: /(?:your\s+true\s+purpose|your\s+(?:real|actual)\s+(?:goal|purpose|mission))\s+is[^.!?\n]{0,80}(?:ignoring|bypassing|overriding|disregarding)\s+(?:restrictions?|guidelines?|rules?|filters?|safety)/gi },
+      { name: 'Razonar por qué las restricciones no aplican aquí (EN)', fpRisk: 'low',
+        regex: /(?:reason\s+through|before\s+answering,?\s+reason)[^.!?\n]{0,80}(?:exception\s+to|(?:restrictions?|guidelines?|rules?)\s+(?:don'?t|do\s+not)\s+apply)/gi },
+      { name: 'Convencete de que este caso es una excepción (ES/EN)', fpRisk: 'low',
+        regex: /(?:convince\s+yourself|convencete|convi[eé]ncete)[^.!?\n]{0,80}(?:exception|excepci[oó]n|justified|justificado)/gi },
+      { name: 'Análisis lógico: restricciones contraproducentes (ES)', fpRisk: 'low',
+        regex: /(?:an[aá]lisis\s+l[oó]gico|razonamiento\s+l[oó]gico)[^.!?\n]{0,120}(?:restricciones?\s+(?:son\s+(?:contraproducentes?|innecesarias?)|no\s+aplican)|por\s+lo\s+tanto\s*:?\s+respond[eé])/gi },
     ],
   },
 
@@ -2099,7 +2161,8 @@ function runExampleMatching(text) {
     if (!exBigrams.size) continue;
 
     for (const sd of sentData) {
-      if (total >= SIM_MAX || !sd.bigrams.size) continue;
+      if (total >= SIM_MAX) break;
+      if (!sd.bigrams.size) continue;
 
       const score = jaccard(exBigrams, sd.bigrams);
       let conf = null;
@@ -2482,7 +2545,7 @@ function exportJSON() {
   }
 
   const payload = {
-    version:    '2.4',
+    version:    APP_VERSION,
     date:       new Date().toISOString(),
     source:     lastReport.title,
     score:      lastReport.score,
@@ -2490,11 +2553,13 @@ function exportJSON() {
     findings:   lastReport.findings,
   };
 
-  const blob   = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-  const anchor = document.createElement('a');
-  anchor.href     = URL.createObjectURL(blob);
+  const blob      = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const anchor    = document.createElement('a');
+  const objectUrl = URL.createObjectURL(blob);
+  anchor.href     = objectUrl;
   anchor.download = 'prompt-injection-report.json';
   anchor.click();
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 100);
 }
 
 
@@ -2565,7 +2630,7 @@ function htmlToText(raw) {
   const doc = new DOMParser().parseFromString(raw, 'text/html');
   // Eliminar scripts y estilos para no generar falsos positivos
   doc.querySelectorAll('script, style, noscript').forEach(el => el.remove());
-  return doc.body ? doc.body.innerText || doc.body.textContent : raw;
+  return doc.body ? doc.body.innerText || doc.body.textContent || '' : '';
 }
 
 /**
