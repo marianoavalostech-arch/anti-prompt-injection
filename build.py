@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-build.py — genera el EXAMPLE_DB de index.html a partir de prompt_injection_ejemplos.csv
+build.py -- genera el EXAMPLE_DB de index.html a partir de prompt_injection_ejemplos.csv
 
 Uso:
     python build.py
@@ -44,7 +44,7 @@ def load_examples(csv_path: Path) -> list[dict]:
             empty_fields = [k for k in ("categoria", "severidad", "confianza")
                             if not row.get(k, "").strip()]
             if empty_fields:
-                print(f"  AVISO fila {i}: campos vacíos {empty_fields} — omitida")
+                print(f"  AVISO fila {i}: campos vacios {empty_fields} -- omitida")
                 continue
             examples.append({
                 "t": row["texto"],
@@ -55,14 +55,24 @@ def load_examples(csv_path: Path) -> list[dict]:
     return examples
 
 
+def html_safe_json(value: str) -> str:
+    """
+    Serializa value como JSON y escapa '</' por '<\\/' para evitar que el parser
+    HTML cierre el bloque <script> al encontrar </script> u otros end-tags dentro
+    de las cadenas embebidas.  '<\\/' es equivalente a '</' en JSON/JS.
+    """
+    return json.dumps(value, ensure_ascii=False).replace("</", "<\\/")
+
+
 def build_js_block(examples: list[dict]) -> str:
     lines = [START_MARKER, "const EXAMPLE_DB = ["]
     for ex in examples:
-        # json.dumps garantiza escape correcto de comillas, backslashes, etc.
-        t = json.dumps(ex["t"], ensure_ascii=False)
-        c = json.dumps(ex["c"], ensure_ascii=False)
-        s = json.dumps(ex["s"], ensure_ascii=False)
-        q = json.dumps(ex["q"], ensure_ascii=False)
+        # html_safe_json garantiza escape correcto de comillas, backslashes y
+        # end-tags HTML (</ -> <\/) para no romper el bloque <script>.
+        t = html_safe_json(ex["t"])
+        c = html_safe_json(ex["c"])
+        s = html_safe_json(ex["s"])
+        q = html_safe_json(ex["q"])
         lines.append(f'  {{"t": {t}, "c": {c}, "s": {s}, "q": {q}}},')
     lines.append("];")
     lines.append(END_MARKER)
@@ -84,7 +94,7 @@ def inject(html_path: Path, js_block: str) -> None:
 
     new_content = content[:start] + js_block + content[end:]
 
-    # Escritura atómica: escribir en temp y renombrar para evitar corrupción
+    # Escritura atomica: escribir en temp y renombrar para evitar corrupcion
     tmp_path = html_path.with_suffix(".html.tmp")
     try:
         tmp_path.write_text(new_content, encoding="utf-8")
@@ -95,13 +105,13 @@ def inject(html_path: Path, js_block: str) -> None:
 
 
 def main() -> None:
-    print(f"Leyendo {CSV_PATH.name} …")
+    print(f"Leyendo {CSV_PATH.name} ...")
     examples = load_examples(CSV_PATH)
     print(f"  {len(examples)} ejemplos cargados.")
 
     js_block = build_js_block(examples)
 
-    print(f"Inyectando en {HTML_PATH.name} …")
+    print(f"Inyectando en {HTML_PATH.name} ...")
     inject(HTML_PATH, js_block)
 
     print(f"  EXAMPLE_DB en index.html: {len(examples)} entradas.")

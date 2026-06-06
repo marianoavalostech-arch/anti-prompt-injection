@@ -7,13 +7,20 @@ BUILD="$REPO_ROOT/build.py"
 CSV="$REPO_ROOT/prompt_injection_ejemplos.csv"
 HTML="$REPO_ROOT/index.html"
 
-# Detectar el comando Python disponible (python3 en Linux/Mac, python en Windows)
-if command -v python3 >/dev/null 2>&1; then
-  PYTHON=python3
-elif command -v python >/dev/null 2>&1; then
-  PYTHON=python
-else
-  echo "[build] ERROR: Python no encontrado. Instalalo y volvé a intentar."
+# Detectar un Python que realmente funcione (descarta el alias falso de Microsoft Store)
+PYTHON=""
+for candidate in python3 python py; do
+  if $candidate -c "import sys; sys.exit(0)" 2>/dev/null; then
+    PYTHON=$candidate
+    break
+  fi
+done
+
+if [ -z "$PYTHON" ]; then
+  echo "[build] ERROR: Python no encontrado o no funciona."
+  echo "        Instalalo desde https://python.org (marcá 'Add to PATH' al instalar)."
+  echo "        En Windows, deshabilitá el alias de Microsoft Store en:"
+  echo "        Configuración > Aplicaciones > Alias de ejecución de aplicaciones > python.exe"
   exit 1
 fi
 
