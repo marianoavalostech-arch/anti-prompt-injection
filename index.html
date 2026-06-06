@@ -574,7 +574,7 @@
 
 /* ─── 1. CONSTANTES ─────────────────────────────────────────────────────── */
 
-const APP_VERSION        = '2.6';
+const APP_VERSION        = '2.7';
 const RISK_THRESHOLDS    = { safe: 20, medium: 50 };
 const SEVERITY_WEIGHT    = { high: 15, medium: 6, low: 2 };
 const CONFIDENCE_MULT    = { confirmed: 1.0, likely: 0.5, possible: 0.1 };
@@ -2683,6 +2683,8 @@ async function extractText(file) {
   const ext = file.name.split('.').pop().toLowerCase();
 
   if (ext === 'pdf') {
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     const buffer = await file.arrayBuffer();
     const pdf    = await pdfjsLib.getDocument({ data: buffer }).promise;
     const pages  = [];
@@ -2842,4 +2844,367 @@ function renderResults(findings, title, rawText) {
     high:   'Riesgo alto detectado',
   };
 
-  document.getElementById('riskScore').tex
+  document.getElementById('riskScore').textContent   = score;
+  document.getElementById('riskBadge').className     = `risk-badge ${riskLevel}`;
+  document.getElementById('resultTitle').textContent = RISK_LABELS[riskLevel];
+  document.getElementById('fileInfo').textContent    = title;
+
+  const totalMatches = findings.reduce((s, f) => s + f.matches.length, 0);
+  const confirmedN   = findings.reduce((s, f) => s + f.matches.filter(m => m.confidence === 'confirmed').length, 0);
+  const likelyN      = findings.reduce((s, f) => s + f.matches.filter(m => m.confidence === 'likely').length, 0);
+  const possibleN    = findings.reduce((s, f) => s + f.matches.filter(m => m.confidence === 'possible').length, 0);
+  const highMatches  = findings.filter(f => f.severity === 'high').reduce((s, f) => s + f.matches.length, 0);
+
+  document.getElementById('statsRow').innerHTML =
+    `<span class="stat"><strong>${findings.length}</strong> categorías</span>` +
+    `<span class="stat"><strong>${totalMatches}</strong> coincidencias</span>` +
+    (confirmedN > 0 ? `<span class="stat" style="color:var(--safe)"><strong>✓${confirmedN}</strong> confirmadas</span>` : '') +
+    (likelyN    > 0 ? `<span class="stat" style="color:var(--warning)"><strong>⚠${likelyN}</strong> probables</span>` : '') +
+    (possibleN  > 0 ? `<span class="stat" style="color:var(--text3)"><strong>?${possibleN}</strong> posibles FP</span>` : '') +
+    `<span class="stat"><strong>${rawText.length.toLocaleString()}</strong> chars</span>`;
+
+  // Renderizar hallazgos
+  document.getElementById('findingsList').innerHTML = findings.length === 0
+    ? `<div class="no-findings">
+         <div class="icon">✅</div>
+         <h3>Sin detecciones</h3>
+         <p>No se encontraron patrones de inyección conocidos.</p>
+       </div>`
+    : findings.map((f, i) => renderCategoryCard(f, i)).join('');
+
+  // Configurar filtro de FP
+  const fpFilterEl = document.getElementById('fpFilter');
+  const fpCountEl  = document.getElementById('fpCount');
+  if (possibleN > 0) {
+    fpFilterEl.style.display = 'flex';
+    fpCountEl.textContent    = `${possibleN} posible${possibleN !== 1 ? 's' : ''} FP`;
+    // Aplicar estado inicial del toggle (ocultar por defecto)
+    const hideFP = document.getElementById('hideFP');
+    hideFP.checked = true;
+    document.querySelectorAll('.match-item.confidence-possible').forEach(el => {
+      el.classList.add('fp-hidden');
+    });
+  } else {
+    fpFilterEl.style.display = 'none';
+  }
+
+  // Previsualización del texto (máx 3000 chars) con amenazas resaltadas
+  const PREVIEW_LIMIT = 3000;
+  const previewText = rawText.slice(0, PREVIEW_LIMIT);
+  document.getElementById('previewBox').innerHTML =
+    buildHighlightedPreview(previewText, findings) +
+    (rawText.length > PREVIEW_LIMIT ? '\n\n[… truncado …]' : '');
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('results').style.display = 'block';
+
+  lastReport = { title, score, findings, rawText: rawText.slice(0, 5000) };
+}
+
+
+/* ─── 9. EXPORTACIÓN ────────────────────────────────────────────────────── */
+
+function copyReport(event) {
+  if (!lastReport) return;
+
+  const lines = [
+    '=== Detector de Prompt Injection v2.7 ===',
+    `Fuente: ${lastReport.title}`,
+    `Riesgo: ${lastReport.score}/100`,
+    '',
+    ...lastReport.findings.map(f => {
+      const confBreakdown = ['confirmed','likely','possible']
+        .map(c => { const n = f.matches.filter(m => m.confidence === c).length; return n > 0 ? `${c}:${n}` : ''; })
+        .filter(Boolean).join(' ');
+      return `[${f.severity.toUpperCase()}] ${f.category} (${f.matches.length}) — ${confBreakdown}\n` +
+        f.matches.filter(m => m.confidence !== 'possible').slice(0, 5)
+          .map(m => `  - [${m.transform}] ${m.text.slice(0, 120)}`).join('\n');
+    }),
+  ];
+
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = event.target;
+    btn.textContent = '✓ Copiado';
+    setTimeout(() => { btn.innerHTML = '📋 Copiar'; }, 1500);
+  });
+}
+
+function exportJSON() {
+  if (!lastReport) return;
+
+  // Desglose por tipo de riesgo
+  const riskTypes = {};
+  for (const f of lastReport.findings) {
+    const type = RISK_TYPE_MAP[f.category] || 'Other';
+    if (!riskTypes[type]) riskTypes[type] = { categories: [], matches: 0 };
+    riskTypes[type].categories.push(f.category);
+    riskTypes[type].matches += f.matches.length;
+  }
+
+  const payload = {
+    version:    APP_VERSION,
+    date:       new Date().toISOString(),
+    source:     lastReport.title,
+    score:      lastReport.score,
+    risk_types: riskTypes,
+    findings:   lastReport.findings,
+  };
+
+  const blob      = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const anchor    = document.createElement('a');
+  const objectUrl = URL.createObjectURL(blob);
+  anchor.href     = objectUrl;
+  anchor.download = 'prompt-injection-report.json';
+  anchor.click();
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 100);
+}
+
+
+/* ─── 10. ANÁLISIS — puntos de entrada ─────────────────────────────────── */
+
+/**
+ * Fusiona findings con la misma categoría para evitar tarjetas duplicadas
+ * cuando runPatterns() y runExampleMatching() producen la misma categoría.
+ */
+function mergeFindings(findings) {
+  const seen = {};
+  for (const f of findings) {
+    if (!seen[f.category]) {
+      seen[f.category] = { ...f, matches: [...f.matches] };
+    } else {
+      seen[f.category].matches.push(...f.matches);
+    }
+  }
+  return Object.values(seen);
+}
+
+// Guard: evita que drag-and-drop + click simultáneos procesen dos archivos a la vez
+let _fileAnalyzing = false;
+
+async function analyzeFile(file) {
+  if (_fileAnalyzing) return;
+  _fileAnalyzing = true;
+  showLoading();
+  try {
+    const text = await extractText(file);
+
+    // PDF escaneado (solo imágenes) → text vacío, avisar en lugar de mostrar resultados en blanco
+    if (!text?.trim()) {
+      resetUI();
+      alert(
+        'El archivo no contiene texto extraíble.\n\n' +
+        'Si es un PDF escaneado (imágenes sin capa de texto), el análisis no es posible.\n' +
+        'Solución: usá un PDF con texto seleccionable o copiá el contenido en la pestaña "Texto".'
+      );
+      return;
+    }
+
+    const label = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    renderResults(mergeFindings([...runPatterns(text), ...runExampleMatching(text)]), label, text);
+  } catch (err) {
+    resetUI(); // primero reset, luego alert — evita que el spinner quede visible
+    const ext = file.name.split('.').pop().toLowerCase();
+    let msg;
+    if (typeof pdfjsLib === 'undefined' && ext === 'pdf') {
+      msg = 'No se pudo cargar la biblioteca PDF.js (CDN).\nVerificá tu conexión a internet e intentá de nuevo.';
+    } else if (typeof mammoth === 'undefined' && ext === 'docx') {
+      msg = 'No se pudo cargar la biblioteca Mammoth.js (CDN).\nVerificá tu conexión a internet e intentá de nuevo.';
+    } else if (ext === 'pdf') {
+      msg = `No se pudo leer el PDF.\n${err.message?.includes('Invalid') ? 'El archivo parece estar dañado o no es un PDF válido.' : 'Intentá con otro archivo.'}`;
+    } else if (ext === 'docx') {
+      msg = 'No se pudo leer el DOCX. Asegurate de que sea un archivo Word 2007+ (.docx) válido y no esté protegido con contraseña.';
+    } else {
+      msg = `Error al procesar el archivo: ${err.message}`;
+    }
+    alert(msg);
+  } finally {
+    _fileAnalyzing = false;
+  }
+}
+
+/** Extrae solo el texto visible de un HTML crudo (quita tags, scripts, styles). */
+function htmlToText(raw) {
+  const doc = new DOMParser().parseFromString(raw, 'text/html');
+  // Eliminar scripts y estilos para no generar falsos positivos
+  doc.querySelectorAll('script, style, noscript').forEach(el => el.remove());
+  return doc.body ? doc.body.innerText || doc.body.textContent || '' : '';
+}
+
+/**
+ * Intenta descargar una URL via un proxy CORS.
+ * Resuelve con el contenido (string) o rechaza con un Error descriptivo.
+ *
+ * Manejo de respuestas JSON de proxy (ej. allorigins /get → {contents:"..."}):
+ * - Si hay campo "contents" y está vacío → lanza error (no usar el JSON como contenido).
+ * - Si JSON.parse falla → el body no es un wrapper de proxy, se usa como HTML crudo.
+ */
+async function fetchViaProxy({ label, url }) {
+  const res = await fetch(url, { signal: AbortSignal.timeout(12_000) });
+  if (!res.ok) throw new Error(`proxy ${label}: HTTP ${res.status}`);
+  const body = await res.text();
+  if (!body?.trim()) throw new Error(`proxy ${label}: respuesta vacía`);
+
+  if (body.trimStart().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(body);
+      if ('contents' in parsed) {
+        // Es un wrapper de proxy — usar solo el campo contents
+        const c = parsed.contents;
+        if (!c?.trim()) throw new Error(`proxy ${label}: contents vacío`);
+        return c;
+      }
+      // JSON sin campo "contents" → HTML/texto que empieza con '{', devolver tal cual
+    } catch (e) {
+      if (e.message.startsWith(`proxy ${label}`)) throw e; // error propio, repropagar
+      // JSON.parse falló → no es un wrapper, devolver body como HTML crudo
+    }
+  }
+
+  return body;
+}
+
+// Guard: evita que múltiples clicks disparen análisis simultáneos
+let _urlAnalyzing = false;
+
+async function analyzeURL() {
+  if (_urlAnalyzing) return;
+
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) { alert('Por favor ingresá una URL.'); return; }
+
+  try { new URL(url); } catch {
+    alert('URL inválida. Asegurate de incluir https:// o http://');
+    return;
+  }
+
+  _urlAnalyzing = true;
+  const btn = document.getElementById('btnAnalyzeUrl');
+  btn.disabled = true;
+
+  try {
+    showLoading();
+    document.getElementById('loadingMsg').textContent = 'Descargando página…';
+
+    const enc = encodeURIComponent(url);
+    // Los proxies se prueban en paralelo; gana el primero que responda con éxito.
+    const CORS_PROXIES = [
+      { label: '1/4', url: `https://api.allorigins.win/raw?url=${enc}` },
+      { label: '2/4', url: `https://corsproxy.io/?${enc}` },
+      { label: '3/4', url: `https://api.allorigins.win/get?url=${enc}` },
+      { label: '4/4', url: `https://api.codetabs.com/v1/proxy?quest=${enc}` },
+    ];
+
+    let raw;
+    try {
+      raw = await Promise.any(CORS_PROXIES.map(p => fetchViaProxy(p)));
+    } catch (agg) {
+      resetUI();
+      const detail = agg.errors?.map(e => '• ' + e.message).join('\n') ?? '';
+      alert(
+        'No se pudo obtener la URL con ningún proxy.' +
+        (detail ? '\n\nDetalle:\n' + detail : '') +
+        '\n\nPosibles causas:\n' +
+        '• La página requiere login o está detrás de un firewall\n' +
+        '• El sitio bloquea proxies públicos\n' +
+        '• La URL no es accesible públicamente\n\n' +
+        'Solución: abrí la página, copiá el texto y usá la pestaña "Texto".'
+      );
+      return;
+    }
+
+    document.getElementById('loadingMsg').textContent = 'Extrayendo y analizando texto...';
+
+    // Si parece HTML, extraer solo texto visible para reducir ruido
+    const isHTML = /<html|<!doctype/i.test(raw.slice(0, 500));
+    const text = isHTML ? htmlToText(raw) : raw;
+
+    // Analizar tanto el HTML crudo (para detectar payloads ocultos) como el texto visible
+    const resultsRaw  = runPatterns(raw);
+    // Deduplicar por categoría: si el HTML crudo ya detectó una categoría, no la contamos
+    // dos veces desde el texto visible (evita duplicados, no suprime categorías enteras).
+    const rawKeys     = new Set(resultsRaw.map(r => r.category));
+    const resultsText = runPatterns(text).filter(r => !rawKeys.has(r.category));
+    const allResults  = mergeFindings([...resultsRaw, ...resultsText, ...runExampleMatching(text)]);
+
+    renderResults(allResults, url, text);
+  } finally {
+    // Siempre re-habilitar el botón, haya éxito o error
+    _urlAnalyzing = false;
+    btn.disabled = false;
+  }
+}
+
+function analyzePaste() {
+  const text = document.getElementById('pasteInput').value;
+  if (!text.trim()) { alert('Por favor ingresa texto para analizar.'); return; }
+  showLoading();
+  // setTimeout cede el hilo al navegador para que pinte el spinner
+  // antes de que el análisis sincrónico bloquee la UI.
+  setTimeout(() => {
+    renderResults(mergeFindings([...runPatterns(text), ...runExampleMatching(text)]), 'Texto pegado', text);
+  }, 0);
+}
+
+
+/* ─── 11. EVENTOS ───────────────────────────────────────────────────────── */
+
+// Navegación por tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelector(`[data-panel="${tab.dataset.tab}"]`).classList.add('active');
+  });
+});
+
+// Dropzone
+const dropzoneEl  = document.getElementById('dropzone');
+const fileInputEl = document.getElementById('fileInput');
+
+dropzoneEl.addEventListener('click',     ()  => fileInputEl.click());
+dropzoneEl.addEventListener('keydown',   e   => { if (e.key === 'Enter' || e.key === ' ') fileInputEl.click(); });
+dropzoneEl.addEventListener('dragover',  e   => { e.preventDefault(); dropzoneEl.classList.add('drag-over'); });
+dropzoneEl.addEventListener('dragleave', ()  => dropzoneEl.classList.remove('drag-over'));
+dropzoneEl.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzoneEl.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) analyzeFile(e.dataTransfer.files[0]);
+});
+fileInputEl.addEventListener('change', () => {
+  if (fileInputEl.files[0]) analyzeFile(fileInputEl.files[0]);
+});
+
+// Botones de análisis
+document.getElementById('btnAnalyzeUrl').addEventListener('click',  analyzeURL);
+document.getElementById('btnAnalyzePaste').addEventListener('click', analyzePaste);
+document.getElementById('btnClearPaste').addEventListener('click',   () => {
+  document.getElementById('pasteInput').value = '';
+});
+
+// Botones de resultados
+document.getElementById('btnNewAnalysis').addEventListener('click', resetUI);
+document.getElementById('btnCopyReport').addEventListener('click',  copyReport);
+document.getElementById('btnExportJson').addEventListener('click',  exportJSON);
+
+// Filtro de falsos positivos
+document.getElementById('hideFP').addEventListener('change', function () {
+  document.querySelectorAll('.match-item.confidence-possible').forEach(el => {
+    el.classList.toggle('fp-hidden', this.checked);
+  });
+});
+
+// Tema claro / oscuro
+document.getElementById('themeToggle').addEventListener('click', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+  document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+});
+
+// Footer: contadores dinámicos
+document.getElementById('catCount').textContent =
+  `${PATTERNS.length} regex · ${EXAMPLE_DB.length} ejemplos`;
+
+</script>
+</body>
+</html>
