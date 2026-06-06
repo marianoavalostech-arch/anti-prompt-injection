@@ -160,7 +160,7 @@ security: agregar hashes SRI a scripts CDN
 
 | Componente | Estado | Detalle |
 |---|---|---|
-| `build.py` — pipeline CSV→HTML | ✅ | 578 ejemplos inyectados correctamente, escritura atómica |
+| `build.py` — pipeline CSV→HTML | ✅ | 792 ejemplos inyectados correctamente, escritura atómica |
 | Sincronización CSV ↔ EXAMPLE_DB | ✅ | 100% sincronizados, verificado programáticamente |
 | Sintaxis Python (3 scripts) | ✅ | Sin errores de sintaxis |
 | Pre-commit hook | ✅ | Solo ejecuta si el CSV está en staging; detecta Python en Win/Mac/Linux |

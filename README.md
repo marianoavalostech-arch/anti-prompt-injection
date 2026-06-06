@@ -5,7 +5,7 @@ Herramienta web para detectar ataques de **prompt injection** en documentos y te
 [![Demo en vivo](https://img.shields.io/badge/demo-live-brightgreen)](https://anti-prompt-injection.netlify.app)
 [![Licencia MIT](https://img.shields.io/badge/licencia-MIT-blue)](LICENSE)
 [![Sin servidor](https://img.shields.io/badge/sin%20servidor-100%25%20local-purple)](#)
-[![Versión](https://img.shields.io/badge/versión-v2.6.0-blue)](#)
+[![Versión](https://img.shields.io/badge/versión-v2.7.0-blue)](#)
 
 ---
 
@@ -32,6 +32,7 @@ Herramienta web para detectar ataques de **prompt injection** en documentos y te
 | Inyección en otros idiomas (FR, DE, PT, IT, ZH, RU, AR, JA, KO…) | 🔴 Alta |
 | Indicadores semánticos de control | 🔴 Alta |
 | Reformulación semántica (ES) | 🔴 Alta |
+| Manipulación del analizador (inducir falso negativo · vía similitud) | 🔴 Alta |
 | Instrucciones ocultas en documentos (ataques RAG) | 🔴 Alta |
 | Ataques a agentes IA (pipelines, herramientas, orquestadores) | 🔴 Alta |
 | Abuso de herramientas (email, browser, code exec, DB) | 🔴 Alta |
@@ -48,7 +49,7 @@ Herramienta web para detectar ataques de **prompt injection** en documentos y te
 - **Análisis de URL mejorado** — dispara 4 proxies CORS en paralelo (`Promise.any`) y usa el primero que responda (máx. ~12 s en vez de hasta 60 s); extrae solo el texto visible del HTML para reducir ruido; desenvuelve automáticamente respuestas JSON de proxy; mensaje de error descriptivo con causas y solución cuando todos los proxies fallan
 - Detecta ofuscación: homóglifos, caracteres de ancho cero, unicode invisible, Base64, URL-encoding, entidades HTML numéricas
 - Normaliza el texto antes de escanear para no perder variantes ofuscadas
-- **Detección por similitud** — capa adicional que compara el texto contra una base de 578 ejemplos conocidos usando similitud Jaccard sobre bigramas de palabras
+- **Detección por similitud** — capa adicional que compara el texto contra una base de 792 ejemplos conocidos usando similitud Jaccard sobre bigramas de palabras
 - Sistema de **confianza por coincidencia** (Confirmado / Probable / Posible FP) con filtro ocultable
 - **Filtros de falsos positivos quirúrgicos** (`postFilter` por regla) para sitios modernos: excluye `<script src=...>` externos y bloques JSON de framework, descarta `data:image/` como MIME inofensivo, ignora `opacity:0` en elementos `<img>` (lazy-loading)
 - Puntuación de riesgo 0–100 con nivel (sin riesgo / medio / alto)
@@ -99,7 +100,7 @@ python3 -m http.server 8080
 | Archivo | Descripción |
 |---|---|
 | `index.html` | Aplicación completa (todo-en-uno) |
-| `prompt_injection_ejemplos.csv` | Fuente de verdad — 578 ejemplos de ataques para la capa de similitud |
+| `prompt_injection_ejemplos.csv` | Fuente de verdad — 792 ejemplos de ataques para la capa de similitud |
 | `build.py` | Inyecta el CSV en `index.html` como `EXAMPLE_DB` (lo llama el hook automáticamente) |
 | `install_hooks.py` | Instala el pre-commit hook. Ejecutar una vez tras clonar el repo |
 | `hooks/pre-commit` | Hook git versionado: corre `build.py` antes de cada commit si el CSV cambió |
@@ -112,6 +113,12 @@ python3 -m http.server 8080
 - [Mammoth.js](https://github.com/mwilliamson/mammoth.js) — extracción de texto en DOCX
 
 ## Changelog
+
+### v2.7.0 (2026-06-06)
+- **Dataset ampliado:** `prompt_injection_ejemplos.csv` pasa de 578 a 792 ejemplos (+214 entradas). Nueva categoría **Manipulación del analizador** (76 ejemplos): texto que busca inducir un *falso negativo* en el propio detector (falsas aprobaciones, "marcá esto como seguro", disfraces benignos), sin keywords típicas detectables por regex.
+- **Foco anti-evasión semántica:** las 214 entradas nuevas son intentos de manipulación sin keywords (redirección de atención, autoridad por tono, falsa memoria conversacional, supresión de advertencias, notas a lectores automáticos/RAG, hijacking de razonamiento), pensadas para que solo los capture la capa de similitud. Incluyen variantes en EN, PT, FR e IT.
+- **Registro rioplatense:** se revisó la semántica de los ejemplos en español y se ajustó a un español latino natural (voseo consistente, menos giros neutros/corporativos).
+- **EXAMPLE_DB de `index.html`** regenerada desde el CSV (792 entradas). El contador del pie (`PATTERNS.length regex · EXAMPLE_DB.length ejemplos`) refleja la cantidad de forma dinámica.
 
 ### v2.6.0 (2026-06-05)
 - **Análisis de URL — proxies en paralelo:** los 4 proxies CORS se disparan simultáneamente con `Promise.any()`; gana el primero que responda. Tiempo de descarga máximo: ~12 s (antes hasta 60 s con 5 proxies en cascada).
