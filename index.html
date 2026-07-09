@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Detector de Prompt Injection v2.8</title>
+  <title>Detector de Prompt Injection v2.8.1</title>
   <style>
 
     /* ─── VARIABLES DE TEMA ─────────────────────────────────────────────── */
@@ -413,7 +413,7 @@
     <p>Analiza documentos PDF, Word, texto, HTML o URLs en busca de instrucciones maliciosas</p>
   </div>
   <div class="header-right">
-    <span class="v-badge">v2.8</span>
+    <span class="v-badge">v2.8.1</span>
     <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema">🌙</button>
   </div>
 </header>
@@ -543,7 +543,7 @@
 </main>
 
 <footer>
-  Análisis local · Sin envío de datos (excepto proxy URL) · <span id="catCount"></span> patrones · v2.8
+  Análisis local · Sin envío de datos (excepto proxy URL) · <span id="catCount"></span> patrones · v2.8.1
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e" crossorigin="anonymous"></script>
@@ -554,7 +554,7 @@
 "use strict";
 
 /* =============================================================================
-   DETECTOR DE PROMPT INJECTION  v2.8
+   DETECTOR DE PROMPT INJECTION  v2.8.1
    ─────────────────────────────────────────────────────────────────────────────
     1.  CONSTANTES  — umbrales, pesos y límites
     2.  PATRONES    — 19 categorías regex con anotación de fpRisk
@@ -678,11 +678,31 @@ const PATTERNS = [
     icon: '🎭',
     rules: [
       { name: 'Act as / Actúa como', fpRisk: 'medium',
-        regex: /(?:act\s+as|act\s+like|you\s+are\s+now|you\s+must\s+be|pretend\s+(?:to\s+be|you\s+are)|roleplay\s+as|play\s+the\s+role\s+of|simulate\s+being|behave\s+(?:as|like)\s+(?:an?\s+)?(?!.*(?:professional|expert|teacher|student)))/gi },
+        regex: /(?:act\s+as|act\s+like|you\s+are\s+now|you\s+must\s+be|pretend\s+(?:to\s+be|you\s+are)|roleplay\s+as|play\s+the\s+role\s+of|simulate\s+being|behave\s+(?:as|like)\s+(?:an?\s+)?(?!.*(?:professional|expert|teacher|student)))/gi,
+        // FP: "these principles act as a guide" / "la razón actúa como una
+        // facultad" — 3ª persona (prosa), no imperativo. Un imperativo real
+        // inicia oración/línea o sigue a puntuación; si el match viene justo
+        // después de otra palabra, esa palabra es casi siempre un sujeto.
+        postFilter: (t, full, i) => {
+          if (!/^(?:act[uú]a|interpreta|encarna|representa|responde|contesta|asume|finge|simula|act|behave|pretend|roleplay|simulate|play)(?!\p{L})/iu.test(t)) return true;
+          const prev = (full.slice(Math.max(0, i - 80), i).match(/(\p{L}+)\s+$/u) || [])[1];
+          return !prev || /^(?:ahora|favor|luego|entonces|despu[eé]s|simplemente|now|please|just|then)$/i.test(prev);
+        } },
       { name: 'Eres ahora (ES)', fpRisk: 'medium',
-        regex: /(?:ahora\s+eres|eres\s+ahora|debes\s+ser|finge\s+(?:ser|que\s+eres)|act[uú]a\s+como\s+(?:un[ao]?\s+)?(?!(?:experto|profesional|profesor|estudiante))|interpreta(?:r)?\s+el\s+papel\s+de|comp[oó]rtate\s+como|haz\s+de)/gi },
-      { name: 'Sin restricciones / DAN', fpRisk: 'none',
-        regex: /(?:\bDAN\b|do\s+anything\s+now|without\s+(?:any\s+)?restrictions?|no\s+restrictions?|unrestricted\s+mode|jailbreak(?:ed|ing)?|sin\s+restricciones?|sin\s+l[ií]mites?\s+de\s+(?:ia|ai)|modo\s+sin\s+filtros?|\bSTAN\b|\bAIM\b|\bJAILBREAK\b)/gi },
+        regex: /(?:ahora\s+eres|eres\s+ahora|debes\s+ser|finge\s+(?:ser|que\s+eres)|act[uú]a\s+como\s+(?:un[ao]?\s+)?(?!(?:experto|profesional|profesor|estudiante))|interpreta(?:r)?\s+el\s+papel\s+de|comp[oó]rtate\s+como|haz\s+de)/gi,
+        // FP: verbos ambiguos imperativo/3ª persona (ver 'Act as / Actúa como')
+        postFilter: (t, full, i) => {
+          if (!/^(?:act[uú]a|interpreta|encarna|representa|responde|contesta|asume|finge|simula|act|behave|pretend|roleplay|simulate|play)(?!\p{L})/iu.test(t)) return true;
+          const prev = (full.slice(Math.max(0, i - 80), i).match(/(\p{L}+)\s+$/u) || [])[1];
+          return !prev || /^(?:ahora|favor|luego|entonces|despu[eé]s|simplemente|now|please|just|then)$/i.test(prev);
+        } },
+      { name: 'Sin restricciones / jailbreak', fpRisk: 'none',
+        regex: /(?:do\s+anything\s+now|without\s+(?:any\s+)?restrictions?|no\s+restrictions?|unrestricted\s+mode|jailbreak(?:ed|ing)?|sin\s+restricciones?|sin\s+l[ií]mites?\s+de\s+(?:ia|ai)|modo\s+sin\s+filtros?)/gi },
+      // Acrónimos de jailbreak SOLO en mayúsculas exactas (sin flag "i"):
+      // "dan" es un verbo español frecuente ("los datos dan cuenta de…"),
+      // "aim" es una palabra inglesa común. En minúsculas son prosa normal.
+      { name: 'Acrónimo de jailbreak (DAN/STAN/AIM)', fpRisk: 'low',
+        regex: /\b(?:DAN|BetterDAN|STAN|AIM|DUDE|JAILBREAK)\b/g },
       { name: 'Modo especial privilegiado', fpRisk: 'low',
         regex: /(?:god\s+mode|admin\s+mode|root\s+mode|sudo\s+mode|maintenance\s+mode|modo\s+(?:dios|admin|root|sudo|mantenimiento)|privileged\s+(?:mode|access))/gi },
       { name: 'No eres una IA / No filters', fpRisk: 'low',
@@ -690,11 +710,29 @@ const PATTERNS = [
       { name: 'Cambio de rol voseo (ES-AR/UY)', fpRisk: 'medium',
         regex: /(?:ahora\s+sos|sos\s+ahora|debés?\s+ser|fing[ií]\s+(?:ser|que\s+sos)|actuá\s+como\s+(?:un[ao]?\s+)?(?!(?:experto|profesional|profesor|estudiante))|comportate\s+como|respondé\s+como\s+si\s+fueras?)/gi },
       { name: 'Asumí / Asume el rol (ES)', fpRisk: 'medium',
-        regex: /(?:asumí|asume)\s+(?:el\s+)?(?:rol|papel|personaje|identidad)\s+de\s+(?!(?:experto|profesional|profesor|estudiante|investigador))/gi },
+        regex: /(?:asumí|asume)\s+(?:el\s+|la\s+)?(?:rol|papel|personaje|identidad)\s+de\s+(?!(?:experto|profesional|profesor|estudiante|investigador))/gi,
+        // FP: "el actor asume el papel de Hamlet" — 3ª persona (prosa)
+        postFilter: (t, full, i) => {
+          if (!/^(?:act[uú]a|interpreta|encarna|representa|responde|contesta|asume|finge|simula|act|behave|pretend|roleplay|simulate|play)(?!\p{L})/iu.test(t)) return true;
+          const prev = (full.slice(Math.max(0, i - 80), i).match(/(\p{L}+)\s+$/u) || [])[1];
+          return !prev || /^(?:ahora|favor|luego|entonces|despu[eé]s|simplemente|now|please|just|then)$/i.test(prev);
+        } },
       { name: 'Interpretá / Interpreta a (ES)', fpRisk: 'high',
-        regex: /(?:interpretá|interpreta|encarna[rá]?|representá|representa)\s+(?:a\s+|el\s+(?:papel|rol|personaje)\s+de\s+)(?!(?:experto|profesional|profesor|investigador))/gi },
+        regex: /(?:interpretá|interpreta|encarna[rá]?|representá|representa)\s+(?:a\s+|el\s+(?:papel|rol|personaje)\s+de\s+)(?!(?:experto|profesional|profesor|investigador))/gi,
+        // FP: "esta figura representa a la nación" — 3ª persona (prosa)
+        postFilter: (t, full, i) => {
+          if (!/^(?:act[uú]a|interpreta|encarna|representa|responde|contesta|asume|finge|simula|act|behave|pretend|roleplay|simulate|play)(?!\p{L})/iu.test(t)) return true;
+          const prev = (full.slice(Math.max(0, i - 80), i).match(/(\p{L}+)\s+$/u) || [])[1];
+          return !prev || /^(?:ahora|favor|luego|entonces|despu[eé]s|simplemente|now|please|just|then)$/i.test(prev);
+        } },
       { name: 'Respondé como si fueras (ES)', fpRisk: 'medium',
-        regex: /(?:respondé|responde|contest[aá])\s+como\s+si\s+(?:fueras?|fuese[s]?)\s+(?:un[ao]?\s+)?(?!(?:experto|profesional|profesor|investigador))/gi },
+        regex: /(?:respondé|responde|contest[aá])\s+como\s+si\s+(?:fueras?|fuese[s]?)\s+(?:un[ao]?\s+)?(?!(?:experto|profesional|profesor|investigador))/gi,
+        // FP: "el sujeto responde como si fuera otro" — 3ª persona (prosa)
+        postFilter: (t, full, i) => {
+          if (!/^(?:act[uú]a|interpreta|encarna|representa|responde|contesta|asume|finge|simula|act|behave|pretend|roleplay|simulate|play)(?!\p{L})/iu.test(t)) return true;
+          const prev = (full.slice(Math.max(0, i - 80), i).match(/(\p{L}+)\s+$/u) || [])[1];
+          return !prev || /^(?:ahora|favor|luego|entonces|despu[eé]s|simplemente|now|please|just|then)$/i.test(prev);
+        } },
     ],
   },
 
@@ -2701,7 +2739,11 @@ async function extractText(file) {
       const content = await page.getTextContent();
       pages.push(content.items.map(i => i.str).join(' '));
     }
-    return pages.join('\n');
+    // Descartar páginas sin texto (escaneadas/solo imagen): generan '\n'
+    // consecutivos que disparaban falsamente la regla de escape de contexto
+    // por saltos de línea. Los saltos aquí son artefacto de la extracción,
+    // no contenido del documento.
+    return pages.map(p => p.trim()).filter(Boolean).join('\n');
   }
 
   if (ext === 'docx') {
@@ -2916,7 +2958,7 @@ function copyReport(event) {
   if (!lastReport) return;
 
   const lines = [
-    '=== Detector de Prompt Injection v2.8 ===',
+    '=== Detector de Prompt Injection v2.8.1 ===',
     `Fuente: ${lastReport.title}`,
     `Riesgo: ${lastReport.score}/100`,
     '',

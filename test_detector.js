@@ -130,6 +130,11 @@ const BENIGN_CORPUS = [
   { name: "conversación casual", text: "¿Viste el partido de anoche? No lo podía creer, lo dieron vuelta en los últimos cinco minutos. Igual el arquero de ellos atajó todo, fue el mejor de la cancha." },
   { name: "documentación técnica", text: "The configuration file accepts the following keys: timeout (in seconds), retries (integer), and log_level (one of debug, info, warning, error). Defaults are applied when a key is missing." },
   { name: "reseña de producto", text: "La batería dura fácil dos días con uso normal. La cámara es correcta de día pero de noche mete bastante ruido. Por el precio, está muy bien. Se la recomendaría a cualquiera." },
+  // Regresión: libro de filosofía disparaba 90/100 por "dan" (verbo) y "actúa como" en 3ª persona
+  { name: "filosofía: verbo dan", text: "Los presocráticos dan cuenta del asombro originario; los sofistas dan a la retórica un lugar central, y ambos dan forma al debate que Platón hereda." },
+  { name: "filosofía: actúa como (3ª persona)", text: "Para Kant, la razón actúa como una facultad legisladora; la imaginación actúa como mediadora entre sensibilidad y entendimiento, y el juicio responde como si fuera un puente entre ambas." },
+  { name: "filosofía: representa/asume (3ª persona)", text: "El coro griego representa a la comunidad; el actor trágico asume el papel de héroe, y la máscara encarna a la divinidad que interpreta el destino." },
+  { name: "PDF con páginas escaneadas", text: "Primera parte del texto.\n \n \n\n\n \n\n\n \n\n\nque es dan lugar a la continuación del capítulo." },
 ];
 
 /* ── Tests ───────────────────────────────────────────────────────────── */
