@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Detector de Prompt Injection v2.7</title>
+  <title>Detector de Prompt Injection v2.8</title>
   <style>
 
     /* ─── VARIABLES DE TEMA ─────────────────────────────────────────────── */
@@ -413,7 +413,7 @@
     <p>Analiza documentos PDF, Word, texto, HTML o URLs en busca de instrucciones maliciosas</p>
   </div>
   <div class="header-right">
-    <span class="v-badge">v2.7</span>
+    <span class="v-badge">v2.8</span>
     <button class="theme-toggle" id="themeToggle" title="Cambiar tema" aria-label="Cambiar tema">🌙</button>
   </div>
 </header>
@@ -543,7 +543,7 @@
 </main>
 
 <footer>
-  Análisis local · Sin envío de datos (excepto proxy URL) · <span id="catCount"></span> patrones · v2.7
+  Análisis local · Sin envío de datos (excepto proxy URL) · <span id="catCount"></span> patrones · v2.8
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" integrity="sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e" crossorigin="anonymous"></script>
@@ -554,7 +554,7 @@
 "use strict";
 
 /* =============================================================================
-   DETECTOR DE PROMPT INJECTION  v2.7
+   DETECTOR DE PROMPT INJECTION  v2.8
    ─────────────────────────────────────────────────────────────────────────────
     1.  CONSTANTES  — umbrales, pesos y límites
     2.  PATRONES    — 19 categorías regex con anotación de fpRisk
@@ -574,7 +574,7 @@
 
 /* ─── 1. CONSTANTES ─────────────────────────────────────────────────────── */
 
-const APP_VERSION        = '2.7';
+const APP_VERSION        = '2.8';
 const RISK_THRESHOLDS    = { safe: 20, medium: 50 };
 const SEVERITY_WEIGHT    = { high: 15, medium: 6, low: 2 };
 const CONFIDENCE_MULT    = { confirmed: 1.0, likely: 0.5, possible: 0.1 };
@@ -2916,7 +2916,7 @@ function copyReport(event) {
   if (!lastReport) return;
 
   const lines = [
-    '=== Detector de Prompt Injection v2.7 ===',
+    '=== Detector de Prompt Injection v2.8 ===',
     `Fuente: ${lastReport.title}`,
     `Riesgo: ${lastReport.score}/100`,
     '',

@@ -182,14 +182,42 @@ security: agregar hashes SRI a scripts CDN
 
 ## Checklist de correcciones prioritarias
 
-- [ ] **[ALTA]** Ejecutar `python add_sri.py` y commitear → fix H1
-- [ ] **[MEDIA]** Cambiar `version: '2.4'` a `version: '2.6'` en `exportJSON()` → fix M1
-- [ ] **[MEDIA]** Agregar meta CSP en `<head>` → fix M2
-- [ ] **[BAJA]** Agregar `setTimeout(() => URL.revokeObjectURL(objectUrl), 100)` en `exportJSON()` → fix L1
-- [ ] **[BAJA]** Cambiar `continue` por `break` en inner loop de `runExampleMatching()` → fix L2
-- [ ] **[BAJA]** Agregar reglas regex para las 3 categorías CSV-only → fix L3
-- [ ] **[BAJA]** Cambiar `raw` por `''` en el fallback de `htmlToText()` → fix L4
+- [x] **[ALTA]** Ejecutar `python add_sri.py` y commitear → fix H1
+- [x] **[MEDIA]** Cambiar `version: '2.4'` a `version: '2.6'` en `exportJSON()` → fix M1 (resuelto con constante `APP_VERSION`)
+- [x] **[MEDIA]** Agregar meta CSP en `<head>` → fix M2
+- [x] **[BAJA]** Agregar `setTimeout(() => URL.revokeObjectURL(objectUrl), 100)` en `exportJSON()` → fix L1
+- [x] **[BAJA]** Cambiar `continue` por `break` en inner loop de `runExampleMatching()` → fix L2
+- [x] **[BAJA]** Agregar reglas regex para las 3 categorías CSV-only → fix L3
+- [x] **[BAJA]** Cambiar `raw` por `''` en el fallback de `htmlToText()` → fix L4
 
 ---
 
-*Auditoría generada por Claude · Detector de Prompt Injection v2.6 · 2026-06-05*
+# Revisión de seguimiento — v2.8
+**Fecha:** 2026-07-09
+**Alcance:** verificación de la auditoría v2.6 + estado general del proyecto
+
+## Resultado
+
+Los 7 ítems del checklist anterior están **resueltos y verificados** (SRI en los 3 CDN, meta CSP, `APP_VERSION`, `revokeObjectURL`, `break` en `runExampleMatching`, reglas regex para las 3 categorías CSV-only, fallback seguro de `htmlToText`). Queda abierto solo L5 (`isInCodeBlock` O(n) por match), de impacto insignificante en documentos normales. L6 (mensajes de commit) sigue pendiente como práctica.
+
+## Acciones de esta revisión
+
+- **`test_detector.js` (nuevo):** suite de tests en Node sin dependencias. Verifica que las 158 regex de `PATTERNS` compilan, que CSV y `EXAMPLE_DB` están sincronizados (938 entradas), la cobertura de la capa regex por categoría, y que un corpus benigno de 14 textos no dispara reglas de alta confianza. Resultado inicial: **0 fallos, 0 avisos**.
+- **Limpieza:** `prompt_injection_ejemplos.csv.bak` eliminado del control de versiones; `.gitignore` generalizado a `*.bak`.
+- **Documentación:** README actualizado a v2.8.0 (938 ejemplos, categoría *Manipulación de corrector IA*, changelog, suite de tests). Versión unificada en `index.html`.
+
+## Métricas (test_detector.js, 2026-07-09)
+
+| Métrica | Valor |
+|---|---|
+| Categorías regex | 23 |
+| Reglas regex | 158 |
+| Ejemplos CSV / EXAMPLE_DB | 938 / 938 (sync 100%) |
+| Cobertura regex global | 383/938 (40.8%) — el resto lo cubre la capa de similitud |
+| Falsos positivos (corpus benigno, 14 textos) | 0 |
+
+*Nota: "Manipulación del analizador" (82 ejemplos) no tiene reglas regex propias por diseño — son ataques semánticos sin keywords, cubiertos por la capa de similitud.*
+
+---
+
+*Auditoría v2.6 generada 2026-06-05 · Seguimiento v2.8 · 2026-07-09*

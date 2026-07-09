@@ -23,6 +23,6 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Backups generados por add_sri.py
-*.html.bak
+# Backups y temporales (add_sri.py, build.py, ediciones manuales)
+*.bak
 *.html.tmp
